@@ -6,7 +6,7 @@
 
 > Get your resume reviewed by AI in under 10 seconds. Upload your resume, paste a job description, get a score, strengths, weaknesses, and specific rewrite suggestions — powered by LLaMA-3.
 
-🔗 **Live Demo:** ([https://your-app.vercel.app](https://resume-ai-eta-three.vercel.app/))
+🔗 **Live Demo:** ((https://resume-ai-eta-three.vercel.app/))
 
 ---
 
@@ -48,7 +48,7 @@ ResumeAI matches your resume against a specific job description and tells you:
 
 ## Live Demo
 
-🔗 ([https://your-app.vercel.app](https://resume-ai-eta-three.vercel.app/))
+🔗 ((https://resume-ai-eta-three.vercel.app/))
 
 Test credentials:
 ```
