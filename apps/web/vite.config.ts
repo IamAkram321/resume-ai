@@ -6,27 +6,16 @@ import path from "path";
 const env = loadEnv("development", path.resolve(import.meta.dirname), "");
 Object.assign(process.env, env);
 
-const rawPort = process.env.PORT || 8081;
-
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
+// Default port for local + production fallback
+const rawPort = process.env.PORT || "8081";
 const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    "BASE_PATH environment variable is required but was not provided.",
-  );
-}
+// Default base path for Vercel
+const basePath = process.env.BASE_PATH || "/";
 
 export default defineConfig({
   base: basePath,
