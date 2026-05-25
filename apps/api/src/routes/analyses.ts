@@ -1,15 +1,16 @@
-import { Router, type IRouter } from "express";
+import express, { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
-import { eq, desc, and, gte, avg, count, sql } from "drizzle-orm";
+import { eq, desc, and, gte, avg, count } from "drizzle-orm";
 import { db, usersTable, analysesTable } from "@resume-ai/db";
-import { checkRateLimit } from "../lib/redis";
+import { checkRateLimit, incrementRateLimit } from "../lib/redis";
 import { analyzeResume } from "../lib/groq";
+import { getOrCreateUser } from "../lib/users";
 import { CreateAnalysisBody, GetAnalysisParams, DeleteAnalysisParams } from "@resume-ai/api-zod";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
 
-async function requireUser(req: any, res: any): Promise<string | null> {
+async function requireUser(req: express.Request, res: express.Response): Promise<string | null> {
   const auth = getAuth(req);
   const clerkUserId = auth?.userId;
   if (!clerkUserId) {
@@ -17,26 +18,6 @@ async function requireUser(req: any, res: any): Promise<string | null> {
     return null;
   }
   return clerkUserId;
-}
-
-async function getOrCreateUser(clerkUserId: string) {
-  let [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.clerkId, clerkUserId));
-
-  if (!user) {
-    [user] = await db
-      .insert(usersTable)
-      .values({
-        id: randomUUID(),
-        clerkId: clerkUserId,
-        email: `${clerkUserId}@unknown.com`,
-        tier: "free",
-      })
-      .returning();
-  }
-  return user;
 }
 
 router.get("/analyses", async (req, res): Promise<void> => {
@@ -67,11 +48,18 @@ router.post("/analyses", async (req, res): Promise<void> => {
     return;
   }
 
+  const resumeText = parsed.data.resumeText.trim();
+  const jobDescription = parsed.data.jobDescription.trim();
+  if (resumeText.length < 50 || jobDescription.length < 50) {
+    res.status(400).json({ error: "Resume and job description must each be at least 50 characters." });
+    return;
+  }
+
   const user = await getOrCreateUser(clerkUserId);
   const isPro = user.tier === "pro";
 
   if (!isPro) {
-    const { allowed, remaining } = await checkRateLimit(clerkUserId);
+    const { allowed } = await checkRateLimit(clerkUserId);
     if (!allowed) {
       res.status(429).json({
         error: "Daily limit reached. Upgrade to Pro.",
@@ -81,23 +69,30 @@ router.post("/analyses", async (req, res): Promise<void> => {
     }
   }
 
-  const { resumeText, jobDescription } = parsed.data;
+  try {
+    const result = await analyzeResume(resumeText, jobDescription);
 
-  const result = await analyzeResume(resumeText, jobDescription);
+    const [analysis] = await db
+      .insert(analysesTable)
+      .values({
+        id: randomUUID(),
+        userId: user.id,
+        resumeText,
+        jobDescription,
+        score: result.score,
+        result,
+      })
+      .returning();
 
-  const [analysis] = await db
-    .insert(analysesTable)
-    .values({
-      id: randomUUID(),
-      userId: user.id,
-      resumeText,
-      jobDescription,
-      score: result.score,
-      result,
-    })
-    .returning();
+    if (!isPro) {
+      await incrementRateLimit(clerkUserId);
+    }
 
-  res.status(201).json(analysis);
+    res.status(201).json(analysis);
+  } catch (err: unknown) {
+    req.log.error({ err }, "Analysis failed");
+    res.status(502).json({ error: "Analysis failed. Please try again in a moment." });
+  }
 });
 
 router.get("/analyses/stats", async (req, res): Promise<void> => {

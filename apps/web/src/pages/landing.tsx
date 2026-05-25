@@ -124,7 +124,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground mesh-bg">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-sm px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -148,13 +148,16 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-        <Badge variant="secondary" className="mb-6 text-xs font-medium px-3 py-1 gap-1.5">
-          <Shield className="w-3 h-3" /> Powered by Llama 3.3 70B · Free to start
+      <section className="relative max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
+        <div className="pointer-events-none absolute inset-0 flex justify-center">
+          <div className="h-64 w-[min(100%,36rem)] rounded-full bg-primary/20 blur-[100px]" />
+        </div>
+        <Badge variant="secondary" className="relative mb-6 text-xs font-medium px-3 py-1 gap-1.5 border-primary/20">
+          <Shield className="w-3 h-3" /> Llama 3.3 · ATS-aware · Free to start
         </Badge>
-        <h1 className="text-5xl md:text-7xl font-extrabold leading-tight tracking-tighter mb-6">
-          Land More Interviews<br />
-          <span className="text-primary">with AI Resume Coaching</span>
+        <h1 className="relative text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.05] tracking-tight mb-6">
+          Your resume, scored against<br />
+          <span className="text-gradient">the job you actually want</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
           Upload your resume, paste the job description, and get an ATS score, tailored rewrite suggestions, a cover letter, and interview prep — all in under 30 seconds.
@@ -192,7 +195,7 @@ export default function Landing() {
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-card border border-card-border rounded-xl p-6 hover:border-primary/30 transition-colors">
+            <div key={title} className="glass-panel rounded-xl p-6 hover-lift hover:border-primary/25 transition-colors">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <Icon className="w-5 h-5 text-primary" />
               </div>
@@ -208,7 +211,7 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">Get results in 3 steps</h2>
-            <p className="text-muted-foreground">No account required to try. Start your first analysis in seconds.</p>
+            <p className="text-muted-foreground">Sign up free — your first analysis takes under 30 seconds.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-10">
             {STEPS.map(({ step, title, desc }) => (

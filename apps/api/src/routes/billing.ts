@@ -3,31 +3,10 @@ import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db, usersTable } from "@resume-ai/db";
 import { stripe } from "../lib/stripe";
-import { logger } from "../lib/logger";
-import { randomUUID } from "crypto";
+import { getOrCreateUser } from "../lib/users";
 
 const router: IRouter = Router();
 const rawBody = express.raw({ type: ["application/json", "application/octet-stream"], limit: "10mb" });
-
-async function getOrCreateUser(clerkUserId: string) {
-  let [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.clerkId, clerkUserId));
-
-  if (!user) {
-    [user] = await db
-      .insert(usersTable)
-      .values({
-        id: randomUUID(),
-        clerkId: clerkUserId,
-        email: `${clerkUserId}@unknown.com`,
-        tier: "free",
-      })
-      .returning();
-  }
-  return user;
-}
 
 router.post("/billing/create-checkout", async (req, res): Promise<void> => {
   const auth = getAuth(req);
@@ -38,12 +17,10 @@ router.post("/billing/create-checkout", async (req, res): Promise<void> => {
   }
 
   const user = await getOrCreateUser(clerkUserId);
-
   const baseUrl = process.env.APP_URL ?? "http://localhost:8081";
 
-  let session;
   try {
-    session = await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card", "upi"],
       line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
@@ -53,13 +30,11 @@ router.post("/billing/create-checkout", async (req, res): Promise<void> => {
       cancel_url: `${baseUrl}/pricing`,
       metadata: { userId: user.id, clerkId: clerkUserId },
     });
-  } catch (err: any) {
-    req.log.error({ err: err?.message }, "Stripe checkout session creation failed");
-    res.status(502).json({ error: err?.message ?? "Failed to create checkout session" });
-    return;
+    res.json({ url: session.url! });
+  } catch (err: unknown) {
+    req.log.error({ err }, "Stripe checkout session creation failed");
+    res.status(502).json({ error: "Failed to create checkout session" });
   }
-
-  res.json({ url: session.url! });
 });
 
 router.post("/billing/portal", async (req, res): Promise<void> => {
@@ -79,23 +54,21 @@ router.post("/billing/portal", async (req, res): Promise<void> => {
 
   const baseUrl = process.env.APP_URL ?? "http://localhost:8081";
 
-  let session;
   try {
-    session = await stripe.billingPortal.sessions.create({
+    const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: `${baseUrl}/billing`,
     });
-  } catch (err: any) {
-    req.log.error({ err: err?.message }, "Stripe portal session creation failed");
-    res.status(502).json({ error: err?.message ?? "Failed to open billing portal" });
-    return;
+    res.json({ url: session.url });
+  } catch (err: unknown) {
+    req.log.error({ err }, "Stripe portal session creation failed");
+    res.status(502).json({ error: "Failed to open billing portal" });
   }
-
-  res.json({ url: session.url });
 });
 
-// Raw body needed for Stripe webhook signature verification
-router.post(
+export const stripeWebhookRouter: IRouter = Router();
+
+stripeWebhookRouter.post(
   "/billing/webhook",
   rawBody,
   async (req: Request, res: Response): Promise<void> => {
@@ -109,42 +82,63 @@ router.post(
         sig as string,
         webhookSecret,
       );
-    } catch (err: any) {
-      req.log.warn({ err: err.message }, "Stripe webhook signature failed");
-      res.status(400).json({ error: `Webhook error: ${err.message}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Invalid signature";
+      req.log.warn({ err: message }, "Stripe webhook signature failed");
+      res.status(400).json({ error: `Webhook error: ${message}` });
       return;
     }
 
     try {
       if (event.type === "checkout.session.completed") {
-        const session = event.data.object as any;
-        const clerkId = session.metadata?.clerkId;
-        const customerId = session.customer;
-        const subscriptionId = session.subscription;
+        const session = event.data.object as {
+          payment_status?: string;
+          metadata?: { clerkId?: string };
+          customer?: string;
+          subscription?: string;
+        };
 
+        if (session.payment_status && session.payment_status !== "paid") {
+          res.json({ status: "ignored" });
+          return;
+        }
+
+        const clerkId = session.metadata?.clerkId;
         if (clerkId) {
+          const [existing] = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.clerkId, clerkId));
+
+          if (existing?.tier === "pro") {
+            res.json({ status: "ok" });
+            return;
+          }
+
           await db
             .update(usersTable)
             .set({
               tier: "pro",
-              stripeCustomerId: customerId,
-              stripeSubscriptionId: subscriptionId,
+              stripeCustomerId: session.customer as string,
+              stripeSubscriptionId: session.subscription as string,
             })
             .where(eq(usersTable.clerkId, clerkId));
           req.log.info({ clerkId }, "User upgraded to pro");
         }
       } else if (event.type === "customer.subscription.deleted") {
-        const subscription = event.data.object as any;
+        const subscription = event.data.object as { customer?: string };
         const customerId = subscription.customer;
 
         await db
           .update(usersTable)
           .set({ tier: "free", stripeSubscriptionId: null })
-          .where(eq(usersTable.stripeCustomerId, customerId));
+          .where(eq(usersTable.stripeCustomerId, customerId as string));
         req.log.info({ customerId }, "User downgraded to free");
       }
     } catch (err) {
       req.log.error({ err }, "Error processing Stripe webhook");
+      res.status(500).json({ error: "Webhook processing failed" });
+      return;
     }
 
     res.json({ status: "ok" });

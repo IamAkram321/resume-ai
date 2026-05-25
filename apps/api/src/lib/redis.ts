@@ -18,11 +18,15 @@ export async function checkRateLimit(
     return { allowed: false, remaining: 0, used: current };
   }
 
+  return { allowed: true, remaining: 3 - current, used: current };
+}
+
+/** Call only after a successful analysis to consume a free-tier slot. */
+export async function incrementRateLimit(userId: string): Promise<void> {
+  const today = new Date().toISOString().split("T")[0];
+  const key = `analyze:${userId}:${today}`;
   await redis.incr(key);
   await redis.expire(key, 86400);
-
-  const newCount = current + 1;
-  return { allowed: true, remaining: 3 - newCount, used: newCount };
 }
 
 export async function getUsageCount(userId: string): Promise<number> {

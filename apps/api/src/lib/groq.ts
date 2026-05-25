@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { logger } from "./logger";
+import { parseLlmJson } from "./parseLlmJson";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -33,6 +34,22 @@ export interface AnalysisResult {
   atsKeywords: string[];
 }
 
+function validateAnalysisResult(data: AnalysisResult): AnalysisResult {
+  if (
+    typeof data.score !== "number" ||
+    data.score < 0 ||
+    data.score > 100 ||
+    typeof data.summary !== "string" ||
+    !Array.isArray(data.strengths) ||
+    !Array.isArray(data.weaknesses) ||
+    !Array.isArray(data.suggestions) ||
+    !Array.isArray(data.atsKeywords)
+  ) {
+    throw new Error("Invalid analysis structure from model");
+  }
+  return data;
+}
+
 export async function analyzeResume(
   resumeText: string,
   jobDescription: string,
@@ -50,7 +67,7 @@ export async function analyzeResume(
     });
 
     const content = completion.choices[0]?.message?.content ?? "";
-    return JSON.parse(content) as AnalysisResult;
+    return validateAnalysisResult(parseLlmJson<AnalysisResult>(content));
   }
 
   try {
@@ -86,13 +103,23 @@ Write ONLY the cover letter text. No subject line, no date, no address headers. 
     temperature: 0.6,
   });
 
-  return completion.choices[0]?.message?.content ?? "";
+  const text = (completion.choices[0]?.message?.content ?? "").trim();
+  if (!text || text.length < 100) {
+    throw new Error("Cover letter generation returned empty or insufficient content");
+  }
+  return text;
+}
+
+export interface InterviewQuestion {
+  category: string;
+  question: string;
+  tip: string;
 }
 
 export async function generateInterviewQuestions(
   resumeText: string,
   jobDescription: string,
-): Promise<{ question: string; tip: string; category: string }[]> {
+): Promise<InterviewQuestion[]> {
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
@@ -114,9 +141,17 @@ Include a mix of behavioral, technical, and role-specific questions. No markdown
   });
 
   const content = completion.choices[0]?.message?.content ?? "[]";
-  try {
-    return JSON.parse(content);
-  } catch {
-    return [];
+  const questions = parseLlmJson<InterviewQuestion[]>(content);
+
+  if (!Array.isArray(questions) || questions.length === 0) {
+    throw new Error("Interview prep generation returned no questions");
   }
+
+  for (const q of questions) {
+    if (!q.question?.trim() || !q.tip?.trim()) {
+      throw new Error("Invalid interview question structure from model");
+    }
+  }
+
+  return questions;
 }

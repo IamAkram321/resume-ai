@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { Trash2, Eye, TrendingUp, FileText, Calendar, Crown, Brain, LogOut, BarChart3 } from "lucide-react";
+import { Link } from "wouter";
+import { Trash2, Eye, TrendingUp, FileText, Calendar, Crown } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AppShell } from "@/components/layout/app-shell";
+import { ScoreRing } from "@/components/score-ring";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -8,11 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useListAnalyses, useDeleteAnalysis, useGetAnalysisStats, useGetMyUsage, getListAnalysesQueryKey, getGetAnalysisStatsQueryKey, getGetMyUsageQueryKey } from "@resume-ai/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUser, useClerk } from "@clerk/react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 interface AnalysisResult {
   score: number;
@@ -33,15 +33,6 @@ interface Analysis {
   createdAt: string;
 }
 
-function ScoreCircle({ score }: { score: number }) {
-  const color = score >= 75 ? "text-chart-2" : score >= 50 ? "text-chart-3" : "text-destructive";
-  return (
-    <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center font-bold text-lg ${color} ${score >= 75 ? "border-chart-2/40" : score >= 50 ? "border-chart-3/40" : "border-destructive/40"}`} data-testid={`score-circle-${score}`}>
-      {score}
-    </div>
-  );
-}
-
 function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClose: () => void }) {
   if (!analysis) return null;
   const result = analysis.result;
@@ -51,7 +42,7 @@ function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClo
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-card border-card-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <ScoreCircle score={result.score} />
+            <ScoreRing score={result.score} size="sm" />
             <div>
               <div className="text-lg font-semibold">Analysis Result</div>
               <div className="text-sm text-muted-foreground font-normal">
@@ -114,9 +105,6 @@ function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClo
 }
 
 export default function Dashboard() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
@@ -140,70 +128,15 @@ export default function Dashboard() {
   const isPro = usage?.isPro ?? false;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Sidebar */}
-      <div className="flex">
-        <aside className="w-60 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col fixed top-0 left-0">
-          <div className="p-5 border-b border-sidebar-border">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Brain className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-lg tracking-tight">ResumeAI</span>
-            </div>
-          </div>
-          <nav className="flex-1 p-4 space-y-1">
-            <Link href="/dashboard">
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-accent text-sidebar-foreground text-sm font-medium cursor-pointer" data-testid="nav-dashboard">
-                <BarChart3 className="w-4 h-4" />Dashboard
-              </div>
-            </Link>
-            <Link href="/analyze">
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors cursor-pointer" data-testid="nav-analyze">
-                <FileText className="w-4 h-4" />Analyze Resume
-              </div>
-            </Link>
-            <Link href="/billing">
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground text-sm transition-colors cursor-pointer" data-testid="nav-billing">
-                <Crown className="w-4 h-4" />Billing
-              </div>
-            </Link>
-          </nav>
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
-                {user?.firstName?.[0] ?? "U"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{user?.firstName ?? "User"}</div>
-                <div className="text-xs text-muted-foreground truncate">{user?.primaryEmailAddress?.emailAddress}</div>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={() => signOut({ redirectUrl: basePath || "/" })} data-testid="btn-signout">
-              <LogOut className="w-4 h-4" />Sign out
-            </Button>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <main className="ml-60 flex-1 p-8">
-          <div className="max-w-5xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold" data-testid="dashboard-welcome">
-                Welcome back, {user?.firstName ?? "there"}
-              </h1>
-              <p className="text-muted-foreground text-sm mt-1">Track your resume performance</p>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <AppShell title="Dashboard" description="Track analyses and improve your match scores over time." isPro={isPro}>
+            <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-4">
               {[
                 { label: "Total Analyses", value: stats?.total ?? 0, icon: FileText },
                 { label: "This Month", value: stats?.thisMonth ?? 0, icon: Calendar },
                 { label: "Avg Score", value: stats?.avgScore != null ? `${stats.avgScore}/100` : "—", icon: TrendingUp },
                 { label: "Current Plan", value: isPro ? "Pro" : "Free", icon: Crown },
               ].map(({ label, value, icon: Icon }) => (
-                <div key={label} className="bg-card border border-card-border rounded-xl p-5" data-testid={`stat-${label.toLowerCase().replace(/ /g, "-")}`}>
+                <div key={label} className="glass-panel rounded-xl p-5" data-testid={`stat-${label.toLowerCase().replace(/ /g, "-")}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon className="w-4 h-4 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">{label}</span>
@@ -215,7 +148,7 @@ export default function Dashboard() {
 
             {/* Usage bar (free users) */}
             {!isPro && usage && (
-              <div className="bg-card border border-card-border rounded-xl p-5 mb-6">
+              <div className="glass-panel rounded-xl p-5 mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium">Daily Usage</span>
                   <span className="text-sm text-muted-foreground" data-testid="usage-counter">{usage.used} / {usage.limit} analyses used today</span>
@@ -256,9 +189,13 @@ export default function Dashboard() {
             </div>
 
             {/* Table */}
-            <div className="bg-card border border-card-border rounded-xl overflow-hidden">
+            <div className="glass-panel overflow-hidden rounded-xl">
               {analysesLoading ? (
-                <div className="p-8 text-center text-muted-foreground text-sm">Loading...</div>
+                <div className="space-y-3 p-6">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
               ) : !analyses || analyses.length === 0 ? (
                 <div className="p-12 text-center">
                   <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
@@ -308,11 +245,7 @@ export default function Dashboard() {
                 </table>
               )}
             </div>
-          </div>
-        </main>
-      </div>
-
       <AnalysisModal analysis={selectedAnalysis} onClose={() => setSelectedAnalysis(null)} />
-    </div>
+    </AppShell>
   );
 }

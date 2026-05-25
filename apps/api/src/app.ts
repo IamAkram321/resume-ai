@@ -9,7 +9,7 @@ import {
   getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
-import rawRouter from "./routes/raw";
+import webhookRouter from "./routes/webhooks-mount";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
@@ -34,12 +34,13 @@ app.use(
   }),
 );
 
-// Clerk proxy must be mounted before body parsers
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
-
 app.use(cors({ credentials: true, origin: true }));
 
-app.use(express.json());
+// Webhooks must receive raw body — mount before JSON parser
+app.use("/api", webhookRouter);
+
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -51,9 +52,13 @@ app.use(
   })),
 );
 
-// Both routers mounted after clerkMiddleware. Webhook routes apply express.raw()
-// inline per-route, overriding the already-parsed body only where needed.
-app.use("/api", rawRouter);
 app.use("/api", router);
+
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  logger.error({ err }, "Unhandled error");
+  if (!res.headersSent) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 export default app;

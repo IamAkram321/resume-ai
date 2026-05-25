@@ -3,6 +3,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
+import type React from "react";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -98,10 +99,14 @@ function SignUpPage() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const [pathname] = useLocation();
+  const redirect = `${basePath}/sign-in?redirect_url=${encodeURIComponent(pathname || "/dashboard")}`;
   return (
     <>
       <Show when="signed-in">{children}</Show>
-      <Show when="signed-out"><Redirect to="/" /></Show>
+      <Show when="signed-out">
+        <Redirect to={redirect} />
+      </Show>
     </>
   );
 }
