@@ -6,7 +6,7 @@ import path from "path";
 const env = loadEnv("development", path.resolve(import.meta.dirname), "");
 Object.assign(process.env, env);
 
-const rawPort = process.env.PORT;
+const rawPort = process.env.PORT || 8081;
 
 if (!rawPort) {
   throw new Error(
