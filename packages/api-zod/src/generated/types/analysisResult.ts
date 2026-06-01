@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AnalysisSuggestion } from './analysisSuggestion';
+import type { AttentionAnalysis } from './attentionAnalysis';
 import type { RejectionAnalysis } from './rejectionAnalysis';
 
 export interface AnalysisResult {
@@ -16,4 +17,5 @@ export interface AnalysisResult {
   suggestions: AnalysisSuggestion[];
   atsKeywords: string[];
   rejectionAnalysis?: RejectionAnalysis;
+  attentionAnalysis?: AttentionAnalysis;
 }

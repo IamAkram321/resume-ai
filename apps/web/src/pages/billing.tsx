@@ -78,7 +78,7 @@ export default function Billing() {
               variant="outline"
               className="mt-4 gap-2"
               disabled={portal.isPending}
-              onClick={() => portal.mutate({})}
+              onClick={() => portal.mutate()}
               data-testid="btn-manage-subscription"
             >
               {portal.isPending ? (
@@ -114,7 +114,7 @@ export default function Billing() {
             <Button
               className="gap-2 glow-ring"
               disabled={checkout.isPending}
-              onClick={() => checkout.mutate({})}
+              onClick={() => checkout.mutate()}
               data-testid="btn-upgrade"
             >
               {checkout.isPending ? (

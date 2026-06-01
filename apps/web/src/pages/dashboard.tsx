@@ -14,17 +14,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { RejectionAnalysisPanel } from "@/components/analysis/rejection-analysis";
-import type { AnalysisResult } from "@resume-ai/api-zod";
-
-interface Analysis {
-  id: string;
-  userId: string;
-  resumeText: string;
-  jobDescription: string;
-  score: number;
-  result: AnalysisResult;
-  createdAt: string;
-}
+import { AttentionAnalysisPanel } from "@/components/analysis/attention-analysis";
+import type { Analysis } from "@resume-ai/api-client-react";
 
 function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClose: () => void }) {
   if (!analysis) return null;
@@ -44,6 +35,11 @@ function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClo
             </div>
           </DialogTitle>
         </DialogHeader>
+        {result.attentionAnalysis && (
+          <div className="mb-4">
+            <AttentionAnalysisPanel data={result.attentionAnalysis} />
+          </div>
+        )}
         {result.rejectionAnalysis && (
           <div className="mb-4">
             <RejectionAnalysisPanel data={result.rejectionAnalysis} />

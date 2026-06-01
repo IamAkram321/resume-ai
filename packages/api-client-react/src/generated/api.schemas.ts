@@ -66,6 +66,54 @@ export interface RejectionAnalysis {
   opportunities: RejectionOpportunity[];
 }
 
+export type AttentionLevel = "High" | "Medium" | "Low";
+
+export interface AttentionArea {
+  section: string;
+  attentionScore: AttentionLevel;
+  reason: string;
+}
+
+export interface VisibilityScores {
+  experienceVisibility: AttentionLevel;
+  projectVisibility: AttentionLevel;
+  skillsVisibility: AttentionLevel;
+  achievementVisibility: AttentionLevel;
+  leadershipVisibility: AttentionLevel;
+  educationVisibility: AttentionLevel;
+}
+
+export interface AttentionTimelinePhase {
+  timeRange: string;
+  recruiterNotices: string;
+  sectionsEvaluated?: string[];
+}
+
+export interface AttentionRecommendation {
+  action: string;
+  expectedEffect: string;
+}
+
+export interface HiddenStrength {
+  insight: string;
+}
+
+export interface MissedOpportunity {
+  insight: string;
+}
+
+export interface AttentionAnalysis {
+  firstFocusAreas: AttentionArea[];
+  ignoredAreas: AttentionArea[];
+  visibilityScores: VisibilityScores;
+  positiveSignals: string[];
+  concerns: string[];
+  timeline: AttentionTimelinePhase[];
+  hiddenStrengths: HiddenStrength[];
+  missedOpportunities: MissedOpportunity[];
+  recommendations: AttentionRecommendation[];
+}
+
 export interface AnalysisResult {
   score: number;
   summary: string;
@@ -74,6 +122,7 @@ export interface AnalysisResult {
   suggestions: AnalysisSuggestion[];
   atsKeywords: string[];
   rejectionAnalysis?: RejectionAnalysis;
+  attentionAnalysis?: AttentionAnalysis;
 }
 
 export interface Analysis {

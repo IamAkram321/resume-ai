@@ -324,9 +324,134 @@ components:
           items:
             $ref: "#/components/schemas/RejectionOpportunity"
 
+    AttentionArea:
+      type: object
+      required: [section, attentionScore, reason]
+      properties:
+        section:
+          type: string
+        attentionScore:
+          type: string
+          enum: [High, Medium, Low]
+        reason:
+          type: string
+
+    VisibilityScores:
+      type: object
+      required:
+        - experienceVisibility
+        - projectVisibility
+        - skillsVisibility
+        - achievementVisibility
+        - leadershipVisibility
+        - educationVisibility
+      properties:
+        experienceVisibility:
+          type: string
+          enum: [High, Medium, Low]
+        projectVisibility:
+          type: string
+          enum: [High, Medium, Low]
+        skillsVisibility:
+          type: string
+          enum: [High, Medium, Low]
+        achievementVisibility:
+          type: string
+          enum: [High, Medium, Low]
+        leadershipVisibility:
+          type: string
+          enum: [High, Medium, Low]
+        educationVisibility:
+          type: string
+          enum: [High, Medium, Low]
+
+    AttentionTimelinePhase:
+      type: object
+      required: [timeRange, recruiterNotices]
+      properties:
+        timeRange:
+          type: string
+        recruiterNotices:
+          type: string
+        sectionsEvaluated:
+          type: array
+          items:
+            type: string
+
+    AttentionRecommendation:
+      type: object
+      required: [action, expectedEffect]
+      properties:
+        action:
+          type: string
+        expectedEffect:
+          type: string
+
+    HiddenStrength:
+      type: object
+      required: [insight]
+      properties:
+        insight:
+          type: string
+
+    MissedOpportunity:
+      type: object
+      required: [insight]
+      properties:
+        insight:
+          type: string
+
+    AttentionAnalysis:
+      type: object
+      required:
+        - firstFocusAreas
+        - ignoredAreas
+        - visibilityScores
+        - positiveSignals
+        - concerns
+        - timeline
+        - hiddenStrengths
+        - missedOpportunities
+        - recommendations
+      properties:
+        firstFocusAreas:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttentionArea"
+        ignoredAreas:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttentionArea"
+        visibilityScores:
+          $ref: "#/components/schemas/VisibilityScores"
+        positiveSignals:
+          type: array
+          items:
+            type: string
+        concerns:
+          type: array
+          items:
+            type: string
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttentionTimelinePhase"
+        hiddenStrengths:
+          type: array
+          items:
+            $ref: "#/components/schemas/HiddenStrength"
+        missedOpportunities:
+          type: array
+          items:
+            $ref: "#/components/schemas/MissedOpportunity"
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttentionRecommendation"
+
     AnalysisResult:
       type: object
-      required: [score, summary, strengths, weaknesses, suggestions, atsKeywords, rejectionAnalysis]
+      required: [score, summary, strengths, weaknesses, suggestions, atsKeywords, rejectionAnalysis, attentionAnalysis]
       properties:
         score:
           type: integer
@@ -350,6 +475,8 @@ components:
             type: string
         rejectionAnalysis:
           $ref: "#/components/schemas/RejectionAnalysis"
+        attentionAnalysis:
+          $ref: "#/components/schemas/AttentionAnalysis"
 
     Analysis:
       type: object

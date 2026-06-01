@@ -96,7 +96,7 @@ export default function Pricing() {
               className="w-full"
               data-testid="pro-plan-cta"
               disabled={checkout.isPending}
-              onClick={() => checkout.mutate({})}
+              onClick={() => checkout.mutate()}
             >
               {checkout.isPending ? "Redirecting..." : "Upgrade to Pro"}
             </Button>

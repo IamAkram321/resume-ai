@@ -29,11 +29,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { extractText } from "@/lib/pdf";
 import { generateCoverLetter, generateInterviewPrep, type InterviewQuestion } from "@/lib/api";
+import { useScrollToReveal } from "@/hooks/use-scroll-to-reveal";
 import { AppShell } from "@/components/layout/app-shell";
 import { ScoreRing, scoreLabel } from "@/components/score-ring";
 import { cn } from "@/lib/utils";
 import { RejectionAnalysisPanel } from "@/components/analysis/rejection-analysis";
-import type { AnalysisResult } from "@resume-ai/api-zod";
+import { AttentionAnalysisPanel } from "@/components/analysis/attention-analysis";
+import type { AnalysisResult } from "@resume-ai/api-client-react";
 
 interface Analysis {
   id: string;
@@ -83,6 +85,9 @@ export default function Analyze() {
   const [coverLetterLoading, setCoverLetterLoading] = useState(false);
   const [interviewQuestions, setInterviewQuestions] = useState<InterviewQuestion[] | null>(null);
   const [interviewLoading, setInterviewLoading] = useState(false);
+
+  const coverLetterReveal = useScrollToReveal();
+  const interviewReveal = useScrollToReveal();
 
   const { data: usage } = useGetMyUsage();
   const isPro = usage?.isPro ?? false;
@@ -149,6 +154,7 @@ export default function Analyze() {
     try {
       const letter = await generateCoverLetter(resumeText.trim(), jobDescription.trim());
       setCoverLetter(letter);
+      coverLetterReveal.queueReveal();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Generation failed";
       toast({ title: "Cover letter failed", description: msg, variant: "destructive" });
@@ -163,6 +169,7 @@ export default function Analyze() {
     try {
       const questions = await generateInterviewPrep(resumeText.trim(), jobDescription.trim());
       setInterviewQuestions(questions);
+      interviewReveal.queueReveal();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Generation failed";
       toast({ title: "Interview prep failed", description: msg, variant: "destructive" });
@@ -350,6 +357,12 @@ export default function Analyze() {
                   </div>
                 </div>
 
+                {analysisResult.attentionAnalysis && (
+                  <div className="mt-6">
+                    <AttentionAnalysisPanel data={analysisResult.attentionAnalysis} />
+                  </div>
+                )}
+
                 {analysisResult.rejectionAnalysis && (
                   <div className="mt-6">
                     <RejectionAnalysisPanel data={analysisResult.rejectionAnalysis} />
@@ -423,20 +436,34 @@ export default function Analyze() {
                   <Button
                     variant="outline"
                     className="justify-start gap-2"
-                    disabled={!isPro || coverLetterLoading}
+                    disabled={!isPro || coverLetterLoading || interviewLoading}
                     onClick={isPro ? runCoverLetter : undefined}
+                    aria-busy={coverLetterLoading}
                   >
-                    {!isPro ? <Lock className="h-4 w-4" /> : coverLetterLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                    Cover letter
+                    {!isPro ? (
+                      <Lock className="h-4 w-4 shrink-0" />
+                    ) : coverLetterLoading ? (
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                    ) : (
+                      <Mail className="h-4 w-4 shrink-0" />
+                    )}
+                    {coverLetterLoading ? "Generating Cover Letter..." : "Cover letter"}
                   </Button>
                   <Button
                     variant="outline"
                     className="justify-start gap-2"
-                    disabled={!isPro || interviewLoading}
+                    disabled={!isPro || interviewLoading || coverLetterLoading}
                     onClick={isPro ? runInterviewPrep : undefined}
+                    aria-busy={interviewLoading}
                   >
-                    {!isPro ? <Lock className="h-4 w-4" /> : interviewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
-                    Interview prep
+                    {!isPro ? (
+                      <Lock className="h-4 w-4 shrink-0" />
+                    ) : interviewLoading ? (
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                    ) : (
+                      <MessageSquare className="h-4 w-4 shrink-0" />
+                    )}
+                    {interviewLoading ? "Generating Interview Prep..." : "Interview prep"}
                   </Button>
                 </div>
                 {!isPro && (
@@ -450,7 +477,11 @@ export default function Analyze() {
               </div>
 
               {coverLetter && (
-                <div className="glass-panel rounded-2xl p-6 animate-in fade-in duration-300">
+                <div
+                  ref={coverLetterReveal.ref}
+                  id="cover-letter-result"
+                  className="glass-panel scroll-reveal-target rounded-2xl p-6 animate-in fade-in duration-300"
+                >
                   <div className="mb-4 flex items-center justify-between">
                     <h3 className="flex items-center gap-2 font-semibold">
                       <Mail className="h-4 w-4 text-primary" />
@@ -465,7 +496,11 @@ export default function Analyze() {
               )}
 
               {interviewQuestions && interviewQuestions.length > 0 && (
-                <div className="glass-panel rounded-2xl p-6 animate-in fade-in duration-300">
+                <div
+                  ref={interviewReveal.ref}
+                  id="interview-prep-result"
+                  className="glass-panel scroll-reveal-target rounded-2xl p-6 animate-in fade-in duration-300"
+                >
                   <h3 className="mb-4 flex items-center gap-2 font-semibold">
                     <MessageSquare className="h-4 w-4 text-primary" />
                     Interview prep ({interviewQuestions.length} questions)

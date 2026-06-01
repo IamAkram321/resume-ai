@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   ArrowRight, Brain, Target, Zap, CheckCircle, FileText,
   MessageSquare, Star, ChevronDown, ChevronUp, Mail,
-  BarChart3, Shield, Clock, ScanSearch,
+  BarChart3, Shield, Clock, ScanSearch, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,11 @@ const FEATURES = [
     icon: Brain,
     title: "AI Resume Analysis",
     desc: "Get a precision score out of 100 with detailed strengths, weaknesses, and an overall summary powered by Llama 3.3 70B.",
+  },
+  {
+    icon: Eye,
+    title: "Recruiter Attention Analysis",
+    desc: "See what a recruiter would likely notice in the first 10 seconds — section visibility, skim timeline, and layout fixes (heuristic-based, not eye tracking).",
   },
   {
     icon: Target,

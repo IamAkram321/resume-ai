@@ -1,7 +1,7 @@
 import Groq from "groq-sdk";
 import { logger } from "./logger";
 import { parseLlmJson } from "./parseLlmJson";
-import { parseAnalysisResultFromLlm, type AnalysisResult } from "@resume-ai/api-zod";
+import { parseAnalysisResultFromLlm, type AnalysisResult } from "@resume-ai/api-zod/schemas/analysis-result";
 
 export type { AnalysisResult };
 
@@ -49,6 +49,32 @@ Return ONLY a valid JSON object with this exact structure:
         "rationale": "<brief why this would help, referencing evidence>"
       }
     ]
+  },
+  "attentionAnalysis": {
+    "firstFocusAreas": [
+      { "section": "<resume section name>", "attentionScore": "High" | "Medium" | "Low", "reason": "<why a recruiter skimming 10-15 seconds would likely notice this — cite position, headers, density, keywords>" }
+    ],
+    "ignoredAreas": [
+      { "section": "<section name>", "attentionScore": "Low", "reason": "<why likely skipped or deprioritized>" }
+    ],
+    "visibilityScores": {
+      "experienceVisibility": "High" | "Medium" | "Low",
+      "projectVisibility": "High" | "Medium" | "Low",
+      "skillsVisibility": "High" | "Medium" | "Low",
+      "achievementVisibility": "High" | "Medium" | "Low",
+      "leadershipVisibility": "High" | "Medium" | "Low",
+      "educationVisibility": "High" | "Medium" | "Low"
+    },
+    "positiveSignals": ["<what creates a strong first impression>"],
+    "concerns": ["<what may hurt discoverability or impression>"],
+    "timeline": [
+      { "timeRange": "Seconds 1-2", "recruiterNotices": "<what they scan first>", "sectionsEvaluated": ["<section>"] }
+    ],
+    "hiddenStrengths": [{ "insight": "<buried strength that should be surfaced earlier>" }],
+    "missedOpportunities": [{ "insight": "<relevant experience/keyword under-emphasized for this role>" }],
+    "recommendations": [
+      { "action": "<layout or content change>", "expectedEffect": "<how it improves recruiter scanning>" }
+    ]
   }
 }
 
@@ -60,6 +86,16 @@ REJECTION ANALYSIS RULES (critical):
 - Each reason MUST use exactly one category from the allowed list.
 - opportunities must prioritize the highest-severity gaps; estimatedImpact is qualitative (High/Medium/Low), not a percentage.
 - Cross-reference atsKeywords, experience years, missing skills, weak verbs, and role requirements.
+
+ATTENTION ANALYSIS RULES (critical):
+- Simulate a 10-15 second recruiter skim using resume structure heuristics ONLY (section order, headings, density, keyword placement, role relevance). This is NOT eye tracking.
+- NEVER claim webcam analysis, neuroscience, heatmaps from real eyes, or numeric attention percentages.
+- Infer layout from how the resume text is ordered (top vs bottom, section headers, bullet density).
+- firstFocusAreas: 2-5 sections recruiters likely see first; ignoredAreas: 0-4 sections likely skipped.
+- visibilityScores: qualitative High/Medium/Low for each dimension based on prominence and relevance to the job.
+- timeline: 3-4 phases covering roughly seconds 1-10 of a skim; be realistic and specific to this resume.
+- hiddenStrengths and missedOpportunities: only when supported by resume content; never invent sections.
+- recommendations: 2-5 practical layout/content changes with expectedEffect (no fake metrics).
 
 Be specific, actionable, and constructive. Return ONLY the JSON. No markdown. No explanation outside the JSON.`;
 

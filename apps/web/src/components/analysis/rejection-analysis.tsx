@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { RejectionAnalysis, RejectionReason } from "@resume-ai/api-zod";
+import type { RejectionAnalysis, RejectionReason } from "@resume-ai/api-client-react";
 
 const SEVERITY_STYLES = {
   High: "bg-amber-500/12 text-amber-800 dark:text-amber-300 border-amber-500/25",
