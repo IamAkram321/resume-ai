@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   ArrowRight, Brain, Target, Zap, CheckCircle, FileText,
   MessageSquare, Star, ChevronDown, ChevronUp, Mail,
-  BarChart3, Shield, Clock,
+  BarChart3, Shield, Clock, ScanSearch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,11 @@ const FEATURES = [
   },
   {
     icon: Target,
+    title: "Why You Will Get Rejected",
+    desc: "Evidence-backed rejection reasons from your resume and the job description — with severity, recruiter impact, and prioritized fixes.",
+  },
+  {
+    icon: ScanSearch,
     title: "ATS Keyword Scanner",
     desc: "See exactly which keywords are missing from your resume that applicant tracking systems look for — and how to add them.",
   },

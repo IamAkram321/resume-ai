@@ -44,6 +44,28 @@ export interface AnalysisSuggestion {
   after: string;
 }
 
+export interface RejectionOpportunity {
+  action: string;
+  estimatedImpact: "High" | "Medium" | "Low";
+  rationale?: string;
+}
+
+export interface RejectionReason {
+  title: string;
+  severity: "High" | "Medium" | "Low";
+  category: string;
+  evidence: string;
+  explanation: string;
+  impact: string;
+  recommendation: string;
+}
+
+export interface RejectionAnalysis {
+  overallRisk: "Low" | "Medium" | "High";
+  reasons: RejectionReason[];
+  opportunities: RejectionOpportunity[];
+}
+
 export interface AnalysisResult {
   score: number;
   summary: string;
@@ -51,6 +73,7 @@ export interface AnalysisResult {
   weaknesses: string[];
   suggestions: AnalysisSuggestion[];
   atsKeywords: string[];
+  rejectionAnalysis?: RejectionAnalysis;
 }
 
 export interface Analysis {

@@ -32,15 +32,8 @@ import { generateCoverLetter, generateInterviewPrep, type InterviewQuestion } fr
 import { AppShell } from "@/components/layout/app-shell";
 import { ScoreRing, scoreLabel } from "@/components/score-ring";
 import { cn } from "@/lib/utils";
-
-interface AnalysisResult {
-  score: number;
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  suggestions: { issue: string; before: string; after: string }[];
-  atsKeywords: string[];
-}
+import { RejectionAnalysisPanel } from "@/components/analysis/rejection-analysis";
+import type { AnalysisResult } from "@resume-ai/api-zod";
 
 interface Analysis {
   id: string;
@@ -356,6 +349,12 @@ export default function Analyze() {
                     )}
                   </div>
                 </div>
+
+                {analysisResult.rejectionAnalysis && (
+                  <div className="mt-6">
+                    <RejectionAnalysisPanel data={analysisResult.rejectionAnalysis} />
+                  </div>
+                )}
 
                 <Tabs defaultValue="overview" className="mt-6">
                   <TabsList className="grid w-full grid-cols-4">

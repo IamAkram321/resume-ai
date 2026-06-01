@@ -268,9 +268,65 @@ components:
         after:
           type: string
 
+    RejectionReason:
+      type: object
+      required: [title, severity, category, evidence, explanation, impact, recommendation]
+      properties:
+        title:
+          type: string
+        severity:
+          type: string
+          enum: [High, Medium, Low]
+        category:
+          type: string
+          enum:
+            - Keyword Match
+            - Experience Match
+            - Project Quality
+            - Technical Depth
+            - Impact Metrics
+            - Resume Structure
+            - Role Alignment
+        evidence:
+          type: string
+        explanation:
+          type: string
+        impact:
+          type: string
+        recommendation:
+          type: string
+
+    RejectionOpportunity:
+      type: object
+      required: [action, estimatedImpact]
+      properties:
+        action:
+          type: string
+        estimatedImpact:
+          type: string
+          enum: [High, Medium, Low]
+        rationale:
+          type: string
+
+    RejectionAnalysis:
+      type: object
+      required: [overallRisk, reasons, opportunities]
+      properties:
+        overallRisk:
+          type: string
+          enum: [Low, Medium, High]
+        reasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/RejectionReason"
+        opportunities:
+          type: array
+          items:
+            $ref: "#/components/schemas/RejectionOpportunity"
+
     AnalysisResult:
       type: object
-      required: [score, summary, strengths, weaknesses, suggestions, atsKeywords]
+      required: [score, summary, strengths, weaknesses, suggestions, atsKeywords, rejectionAnalysis]
       properties:
         score:
           type: integer
@@ -292,6 +348,8 @@ components:
           type: array
           items:
             type: string
+        rejectionAnalysis:
+          $ref: "#/components/schemas/RejectionAnalysis"
 
     Analysis:
       type: object

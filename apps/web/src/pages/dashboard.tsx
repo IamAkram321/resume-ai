@@ -13,15 +13,8 @@ import { useListAnalyses, useDeleteAnalysis, useGetAnalysisStats, useGetMyUsage,
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-
-interface AnalysisResult {
-  score: number;
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  suggestions: { issue: string; before: string; after: string }[];
-  atsKeywords: string[];
-}
+import { RejectionAnalysisPanel } from "@/components/analysis/rejection-analysis";
+import type { AnalysisResult } from "@resume-ai/api-zod";
 
 interface Analysis {
   id: string;
@@ -39,7 +32,7 @@ function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClo
 
   return (
     <Dialog open={!!analysis} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-card border-card-border">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-card border-card-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <ScoreRing score={result.score} size="sm" />
@@ -51,12 +44,17 @@ function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClo
             </div>
           </DialogTitle>
         </DialogHeader>
+        {result.rejectionAnalysis && (
+          <div className="mb-4">
+            <RejectionAnalysisPanel data={result.rejectionAnalysis} />
+          </div>
+        )}
         <Tabs defaultValue="overview">
-          <TabsList className="w-full">
-            <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
-            <TabsTrigger value="strengths" className="flex-1">Strengths</TabsTrigger>
-            <TabsTrigger value="weaknesses" className="flex-1">Weaknesses</TabsTrigger>
-            <TabsTrigger value="suggestions" className="flex-1">Suggestions</TabsTrigger>
+          <TabsList className="w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="strengths">Strengths</TabsTrigger>
+            <TabsTrigger value="weaknesses">Gaps</TabsTrigger>
+            <TabsTrigger value="suggestions">Rewrites</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="mt-4 space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">{result.summary}</p>

@@ -1,10 +1,19 @@
 import Groq from "groq-sdk";
 import { logger } from "./logger";
 import { parseLlmJson } from "./parseLlmJson";
+import { parseAnalysisResultFromLlm, type AnalysisResult } from "@resume-ai/api-zod";
+
+export type { AnalysisResult };
+
+export interface InterviewQuestion {
+  category: string;
+  question: string;
+  tip: string;
+}
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const SYSTEM_PROMPT = `You are an expert technical recruiter and resume coach with 15 years of experience at top tech companies. Analyze the provided resume against the job description.
+const SYSTEM_PROMPT = `You are an expert technical recruiter and hiring manager with 15 years of experience at top tech companies. Analyze the provided resume against the job description.
 
 Return ONLY a valid JSON object with this exact structure:
 {
@@ -15,40 +24,44 @@ Return ONLY a valid JSON object with this exact structure:
   "suggestions": [
     {
       "issue": "<what is wrong>",
-      "before": "<example of current weak phrasing>",
+      "before": "<quote or paraphrase from resume>",
       "after": "<improved version>"
     }
   ],
-  "atsKeywords": ["<missing keyword 1>", "<missing keyword 2>"]
-}
-
-Be specific, actionable, and harsh but constructive.
-Return ONLY the JSON. No markdown. No explanation.`;
-
-export interface AnalysisResult {
-  score: number;
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  suggestions: { issue: string; before: string; after: string }[];
-  atsKeywords: string[];
-}
-
-function validateAnalysisResult(data: AnalysisResult): AnalysisResult {
-  if (
-    typeof data.score !== "number" ||
-    data.score < 0 ||
-    data.score > 100 ||
-    typeof data.summary !== "string" ||
-    !Array.isArray(data.strengths) ||
-    !Array.isArray(data.weaknesses) ||
-    !Array.isArray(data.suggestions) ||
-    !Array.isArray(data.atsKeywords)
-  ) {
-    throw new Error("Invalid analysis structure from model");
+  "atsKeywords": ["<missing keyword from job description not found in resume>"],
+  "rejectionAnalysis": {
+    "overallRisk": "Low" | "Medium" | "High",
+    "reasons": [
+      {
+        "title": "<short reason title>",
+        "severity": "High" | "Medium" | "Low",
+        "category": "Keyword Match" | "Experience Match" | "Project Quality" | "Technical Depth" | "Impact Metrics" | "Resume Structure" | "Role Alignment",
+        "evidence": "<specific quotes or facts from resume AND/OR job description that support this reason — never invent details>",
+        "explanation": "<why this matters for this specific role>",
+        "impact": "<how recruiters or ATS may interpret this gap>",
+        "recommendation": "<concrete action the candidate should take>"
+      }
+    ],
+    "opportunities": [
+      {
+        "action": "<specific improvement tied to a weakness above>",
+        "estimatedImpact": "High" | "Medium" | "Low",
+        "rationale": "<brief why this would help, referencing evidence>"
+      }
+    ]
   }
-  return data;
 }
+
+REJECTION ANALYSIS RULES (critical):
+- Provide 3-6 reasons, each backed by explicit evidence from the resume text or job description.
+- NEVER invent technologies, employers, metrics, or requirements not present in the inputs.
+- NEVER use arbitrary percentages or numeric rejection probabilities.
+- Set overallRisk from the pattern of severities: multiple High → usually High risk; mixed → Medium; mostly Low → Low.
+- Each reason MUST use exactly one category from the allowed list.
+- opportunities must prioritize the highest-severity gaps; estimatedImpact is qualitative (High/Medium/Low), not a percentage.
+- Cross-reference atsKeywords, experience years, missing skills, weak verbs, and role requirements.
+
+Be specific, actionable, and constructive. Return ONLY the JSON. No markdown. No explanation outside the JSON.`;
 
 export async function analyzeResume(
   resumeText: string,
@@ -67,7 +80,7 @@ export async function analyzeResume(
     });
 
     const content = completion.choices[0]?.message?.content ?? "";
-    return validateAnalysisResult(parseLlmJson<AnalysisResult>(content));
+    return parseAnalysisResultFromLlm(parseLlmJson(content));
   }
 
   try {
@@ -108,12 +121,6 @@ Write ONLY the cover letter text. No subject line, no date, no address headers. 
     throw new Error("Cover letter generation returned empty or insufficient content");
   }
   return text;
-}
-
-export interface InterviewQuestion {
-  category: string;
-  question: string;
-  tip: string;
 }
 
 export async function generateInterviewQuestions(
