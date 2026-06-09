@@ -8,6 +8,7 @@ export const tailoredResumesTable = pgTable("tailored_resumes", {
   analysisId: text("analysis_id"),
   originalResume: text("original_resume").notNull(),
   tailoredResume: text("tailored_resume").notNull(),
+  resumeLayout: json("resume_layout"),
   jobDescription: text("job_description").notNull(),
   targetRole: text("target_role"),
   atsBefore: integer("ats_before").notNull(),

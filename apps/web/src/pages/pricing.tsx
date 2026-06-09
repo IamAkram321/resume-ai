@@ -84,7 +84,7 @@ export default function Pricing() {
                 "Unlimited resume tailoring",
                 "Unlimited cover letters",
                 "Unlimited interview prep",
-                "Export & version management",
+                "Export & PDF download",
                 "Extended history",
               ].map(f => (
                 <li key={f} className="flex items-center gap-2">

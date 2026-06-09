@@ -80,6 +80,21 @@ export async function deleteTailoredResume(id: string): Promise<void> {
   await customFetch<void>(`/api/tailored-resumes/${id}`, { method: "DELETE" });
 }
 
+export async function downloadTailoredResumePdf(
+  id: string,
+  filename?: string,
+): Promise<void> {
+  const blob = await customFetch<Blob>(`/api/tailored-resumes/${id}/pdf`, {
+    responseType: "blob",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename ?? "tailored-resume.pdf";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function downloadResumeText(filename: string, content: string): void {
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);

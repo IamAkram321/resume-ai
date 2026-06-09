@@ -16,7 +16,10 @@ import {
   CreateTailoredResumeBody,
   TailoredResumeParams,
   UpdateTailoredResumeLabelBody,
+  ResumeLayoutSchema,
+  type ResumeLayout,
 } from "@resume-ai/api-zod";
+import { buildPdfFilename, generateTailoredResumePdf } from "../lib/resume-pdf";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
@@ -88,6 +91,7 @@ router.post("/tailored-resumes", async (req, res): Promise<void> => {
   let jobDescription = parsed.data.jobDescription?.trim() ?? "";
   let analysisScore: number | undefined;
   let storedAnalysis = null;
+  let resumeLayout: ResumeLayout | null = null;
 
   if (parsed.data.analysisId) {
     const [analysis] = await db
@@ -109,6 +113,10 @@ router.post("/tailored-resumes", async (req, res): Promise<void> => {
     jobDescription = analysis.jobDescription;
     analysisScore = analysis.score;
     storedAnalysis = parseStoredAnalysisResult(analysis.result);
+    if (analysis.resumeLayout) {
+      const layoutParsed = ResumeLayoutSchema.safeParse(analysis.resumeLayout);
+      if (layoutParsed.success) resumeLayout = layoutParsed.data;
+    }
   }
 
   if (resumeText.length < 50 || jobDescription.length < 50) {
@@ -141,6 +149,7 @@ router.post("/tailored-resumes", async (req, res): Promise<void> => {
         analysisId: parsed.data.analysisId ?? null,
         originalResume: resumeText,
         tailoredResume: tailoringRecord.tailoredResume,
+        resumeLayout,
         jobDescription,
         targetRole: tailoringRecord.targetRole ?? null,
         atsBefore: metrics.atsBefore,
@@ -160,6 +169,71 @@ router.post("/tailored-resumes", async (req, res): Promise<void> => {
       "Resume tailoring failed. Please try again.",
     );
     res.status(status).json(body);
+  }
+});
+
+router.get("/tailored-resumes/:id/pdf", async (req, res): Promise<void> => {
+  const clerkUserId = await requireUser(req, res);
+  if (!clerkUserId) return;
+
+  const params = TailoredResumeParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const user = await getOrCreateUser(clerkUserId);
+  if (user.tier !== "pro") {
+    res.status(403).json({ error: "PDF export requires Pro." });
+    return;
+  }
+
+  const [row] = await db
+    .select()
+    .from(tailoredResumesTable)
+    .where(
+      and(
+        eq(tailoredResumesTable.id, params.data.id),
+        eq(tailoredResumesTable.userId, user.id),
+      ),
+    );
+
+  if (!row) {
+    res.status(404).json({ error: "Tailored resume not found" });
+    return;
+  }
+
+  try {
+    let layout: ResumeLayout | null = null;
+    if (row.resumeLayout) {
+      const parsed = ResumeLayoutSchema.safeParse(row.resumeLayout);
+      if (parsed.success) layout = parsed.data;
+    }
+    if (!layout && row.analysisId) {
+      const [analysis] = await db
+        .select({ resumeLayout: analysesTable.resumeLayout })
+        .from(analysesTable)
+        .where(eq(analysesTable.id, row.analysisId));
+      if (analysis?.resumeLayout) {
+        const parsed = ResumeLayoutSchema.safeParse(analysis.resumeLayout);
+        if (parsed.success) layout = parsed.data;
+      }
+    }
+
+    const tailoringResult = row.result as { changes?: Array<{ original: string; optimized: string }> };
+    const pdf = await generateTailoredResumePdf(row.tailoredResume, {
+      title: row.label ?? row.targetRole ?? "Tailored Resume",
+      targetRole: row.targetRole,
+      layout,
+      changes: tailoringResult?.changes,
+    });
+    const filename = buildPdfFilename(row.label, row.targetRole);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(pdf);
+  } catch (err: unknown) {
+    req.log.error({ err }, "PDF export failed");
+    res.status(500).json({ error: "Could not generate PDF. Please try again." });
   }
 });
 

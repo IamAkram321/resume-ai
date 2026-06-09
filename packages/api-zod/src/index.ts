@@ -11,6 +11,17 @@ export {
   TailoredResumeParams,
   UpdateTailoredResumeLabelBody,
 } from "./schemas/tailored-resume-routes";
+export { CreateAnalysisBody } from "./schemas/analysis-routes";
+export {
+  ResumeLayoutSchema,
+  ResumeLineSchema,
+  TextSegmentSchema,
+  type ResumeLayout,
+  type ResumeLine,
+  type TextSegment,
+  type LineType,
+  type FontFamily,
+} from "./schemas/resume-layout";
 export {
   SeveritySchema,
   RiskLevelSchema,

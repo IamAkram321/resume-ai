@@ -7,6 +7,7 @@ export const analysesTable = pgTable("analyses", {
   userId: text("user_id").notNull(),
   resumeText: text("resume_text").notNull(),
   jobDescription: text("job_description").notNull(),
+  resumeLayout: json("resume_layout"),
   score: integer("score").notNull(),
   result: json("result").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

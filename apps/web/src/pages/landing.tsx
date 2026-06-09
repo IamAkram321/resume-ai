@@ -61,7 +61,7 @@ const STEPS = [
   { step: "01", title: "Upload Your Resume", desc: "Drag and drop your PDF or paste your resume text. We extract all content automatically." },
   { step: "02", title: "Paste the Job Description", desc: "Copy the job listing you're applying for. The more detail you provide, the better the analysis." },
   { step: "03", title: "Get AI Feedback", desc: "Receive your score, strengths, weaknesses, and recruiter intelligence — in seconds." },
-  { step: "04", title: "Tailor & Apply", desc: "One-click tailor your resume, compare original vs optimized, and export when ready." },
+  { step: "04", title: "Tailor & Apply", desc: "One-click tailor your resume, compare original vs optimized, and download an ATS-friendly PDF." },
 ];
 
 const TESTIMONIALS = [
@@ -353,7 +353,7 @@ export default function Landing() {
                 "Unlimited tailoring",
                 "Unlimited cover letters",
                 "Unlimited interview prep",
-                "Export & version management",
+                "Export & PDF download",
                 "Extended history",
               ].map(f => (
                 <li key={f} className="flex items-center gap-2 text-sm">

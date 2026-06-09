@@ -113,13 +113,22 @@ Be specific, actionable, and constructive. Return ONLY the JSON. No markdown. No
 
 const TAILOR_RESUME_TEXT_PROMPT = `You are an expert resume optimization specialist. Rewrite the candidate's resume for the specific job description.
 
-Output ONLY the full tailored resume as plain text with clear section headers (e.g. EXPERIENCE, PROJECTS, SKILLS).
+Output ONLY the full tailored resume as plain text.
 Do NOT use JSON, markdown code fences, or commentary before/after the resume.
 
-CRITICAL HONESTY RULES:
+STRUCTURE PRESERVATION RULES (CRITICAL):
+- Keep the candidate's name EXACTLY as written — same spelling, casing, and position.
+- Keep ALL contact info unchanged: email, phone, GitHub, LinkedIn, LeetCode, portfolio URLs.
+- Keep ALL section headers in the SAME order with the SAME titles (e.g. EXPERIENCE, PROJECTS, SKILLS).
+- Keep project line format: "Project Name | Tech Stack | GitHub | Live" — only improve wording inside segments, never remove links or pipes.
+- Keep date ranges in the same position and format (e.g. "Jan 2025 – Mar 2025").
+- Do NOT flatten the layout into generic paragraphs.
+- Do NOT remove hyperlinks or URL text.
+
+CONTENT RULES:
+- ONLY modify bullet points, descriptions, keywords, and achievement phrasing.
 - NEVER invent experience, companies, technologies, projects, certifications, or metrics.
 - ONLY rewrite, reorder, emphasize, and strengthen content from the original resume.
-- Do not add numbers unless they already exist in the original.
 
 Use prior analysis context when provided to prioritize role-relevant content and keywords.`;
 

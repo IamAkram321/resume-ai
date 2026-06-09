@@ -45,7 +45,7 @@ export default function Billing() {
     "Unlimited resume tailoring",
     "Unlimited cover letter generation",
     "Unlimited interview prep",
-    "Export tailored resumes",
+    "Download tailored PDF resumes",
     "Extended analysis history",
   ];
 

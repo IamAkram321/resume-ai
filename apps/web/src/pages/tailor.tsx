@@ -9,6 +9,7 @@ import {
   Crown,
   ArrowLeft,
   Wand2,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,7 @@ import {
   getTailoredResume,
   listTailoredResumes,
   deleteTailoredResume,
+  downloadTailoredResumePdf,
   downloadResumeText,
 } from "@/lib/api";
 import type { TailoredResumeRecord } from "@/lib/tailoring-types";
@@ -76,6 +78,7 @@ export default function Tailor() {
   const [versions, setVersions] = useState<TailoredResumeRecord[]>([]);
   const [loading, setLoading] = useState(!!recordId);
   const [generating, setGenerating] = useState(false);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
 
   const resultsReveal = useScrollToReveal();
 
@@ -178,6 +181,28 @@ export default function Tailor() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!record) return;
+    setPdfDownloading(true);
+    try {
+      const filename = `${(record.label ?? record.targetRole ?? "tailored-resume")
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .slice(0, 60)
+        .toLowerCase() || "tailored-resume"}.pdf`;
+      await downloadTailoredResumePdf(record.id, filename);
+      toast({ title: "PDF downloaded", description: "Your ATS-friendly resume is ready to submit." });
+    } catch (err: unknown) {
+      toast({
+        title: "PDF download failed",
+        description: getErrorMessage(err, "Could not generate PDF."),
+        variant: "destructive",
+      });
+    } finally {
+      setPdfDownloading(false);
+    }
+  };
+
   const tailoring = record?.result;
 
   return (
@@ -242,7 +267,7 @@ export default function Tailor() {
             <div className="mt-4">
               <UpgradePrompt
                 compact
-                description={`You've used ${tailorQuota.used} of ${tailorQuota.limit} free tailoring today. Pro unlocks unlimited tailoring, export, and version management.`}
+                description={`You've used ${tailorQuota.used} of ${tailorQuota.limit} free tailoring today. Pro unlocks unlimited tailoring, PDF export, and version management.`}
               />
             </div>
           )}
@@ -261,25 +286,40 @@ export default function Tailor() {
           <div className="flex flex-wrap gap-2 justify-end">
             <CopyButton text={record.tailoredResume} />
             {isPro ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() =>
-                  downloadResumeText(
-                    `${(record.label ?? "tailored-resume").replace(/\s+/g, "-")}.txt`,
-                    record.tailoredResume,
-                  )
-                }
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export .txt
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={pdfDownloading}
+                  onClick={() => void handleDownloadPdf()}
+                >
+                  {pdfDownloading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  {pdfDownloading ? "Generating PDF…" : "Download Tailored PDF"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground"
+                  onClick={() =>
+                    downloadResumeText(
+                      `${(record.label ?? "tailored-resume").replace(/\s+/g, "-")}.txt`,
+                      record.tailoredResume,
+                    )
+                  }
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Plain text
+                </Button>
+              </>
             ) : (
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
                 <Link href="/billing">
                   <Crown className="h-3.5 w-3.5" />
-                  Pro export
+                  Pro PDF export
                 </Link>
               </Button>
             )}

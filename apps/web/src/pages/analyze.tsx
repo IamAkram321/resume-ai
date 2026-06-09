@@ -27,7 +27,8 @@ import {
 } from "@resume-ai/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { extractText } from "@/lib/pdf";
+import { extractResume, buildLayoutFromText } from "@/lib/pdf";
+import type { ResumeLayout } from "@resume-ai/api-zod/schemas/resume-layout";
 import { generateCoverLetter, generateInterviewPrep, type InterviewQuestion } from "@/lib/api";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { useScrollToReveal } from "@/hooks/use-scroll-to-reveal";
@@ -81,6 +82,7 @@ export default function Analyze() {
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
+  const [resumeLayout, setResumeLayout] = useState<ResumeLayout | null>(null);
   const [inputMode, setInputMode] = useState<"upload" | "paste">("paste");
   const [result, setResult] = useState<Analysis | null>(null);
 
@@ -130,8 +132,9 @@ export default function Analyze() {
 
   const handleFile = async (file: File) => {
     try {
-      const text = await extractText(file);
+      const { text, layout } = await extractResume(file);
       setResumeText(text);
+      setResumeLayout(layout);
       setFileName(file.name);
       setInputMode("upload");
     } catch {
@@ -155,7 +158,14 @@ export default function Analyze() {
       return;
     }
     if (!canAnalyze) return;
-    analyze.mutate({ data: { resumeText: resumeText.trim(), jobDescription: jobDescription.trim() } });
+    const layout = resumeLayout ?? buildLayoutFromText(resumeText.trim());
+    analyze.mutate({
+      data: {
+        resumeText: resumeText.trim(),
+        jobDescription: jobDescription.trim(),
+        resumeLayout: layout,
+      } as { resumeText: string; jobDescription: string; resumeLayout?: ResumeLayout },
+    });
   };
 
   const handleReset = () => {
@@ -163,6 +173,7 @@ export default function Analyze() {
     setCoverLetter(null);
     setInterviewQuestions(null);
     setResumeText("");
+    setResumeLayout(null);
     setJobDescription("");
     setFileName(null);
     setInputMode("paste");
@@ -275,6 +286,7 @@ export default function Analyze() {
                 value={resumeText}
                 onChange={(e) => {
                   setResumeText(e.target.value);
+                  setResumeLayout(null);
                   setFileName(null);
                 }}
               />

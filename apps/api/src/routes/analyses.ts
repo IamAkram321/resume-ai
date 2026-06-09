@@ -10,7 +10,7 @@ import {
 import { analyzeResume } from "../lib/groq";
 import { mapLlmErrorToResponse } from "../lib/llm-errors";
 import { getOrCreateUser } from "../lib/users";
-import { CreateAnalysisBody, GetAnalysisParams, DeleteAnalysisParams } from "@resume-ai/api-zod";
+import { CreateAnalysisBody, GetAnalysisParams, DeleteAnalysisParams, ResumeLayoutSchema } from "@resume-ai/api-zod";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
@@ -73,6 +73,14 @@ router.post("/analyses", async (req, res): Promise<void> => {
   try {
     const result = await analyzeResume(resumeText, jobDescription);
 
+    let resumeLayout = null;
+    if (parsed.data.resumeLayout) {
+      const layoutParsed = ResumeLayoutSchema.safeParse(parsed.data.resumeLayout);
+      if (layoutParsed.success) {
+        resumeLayout = layoutParsed.data;
+      }
+    }
+
     const [analysis] = await db
       .insert(analysesTable)
       .values({
@@ -80,6 +88,7 @@ router.post("/analyses", async (req, res): Promise<void> => {
         userId: user.id,
         resumeText,
         jobDescription,
+        resumeLayout,
         score: result.score,
         result,
       })
