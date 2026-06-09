@@ -202,6 +202,80 @@
   .scroll-reveal-target {
     scroll-margin-top: 5.5rem;
   }
+
+  /* Landing page signature styles */
+  .landing-mesh {
+    background-image:
+      radial-gradient(ellipse 90% 60% at 20% -10%, hsl(var(--primary) / 0.12), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 85% 10%, hsl(var(--chart-5) / 0.1), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, hsl(258 60% 30% / 0.08), transparent 55%),
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--mesh-1) / 0.9), transparent);
+  }
+
+  .landing-scan-lines {
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      hsl(var(--primary) / 0.15) 3px,
+      hsl(var(--primary) / 0.15) 4px
+    );
+    animation: landing-scan-drift 60s linear infinite;
+  }
+
+  .landing-doc-pattern {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .landing-glass {
+    @apply border border-card-border/50 bg-card/60 backdrop-blur-xl;
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.04),
+      0 8px 32px -8px hsl(var(--foreground) / 0.08);
+  }
+
+  .landing-glass-glow {
+    @apply border border-primary/20 bg-card/50 backdrop-blur-xl;
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.1),
+      0 0 60px -12px hsl(var(--primary) / 0.25),
+      0 20px 50px -20px hsl(var(--foreground) / 0.15);
+  }
+
+  .landing-feature-card {
+    will-change: transform;
+  }
+
+  .landing-feature-glow {
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.15), 0 0 30px -8px hsl(var(--primary) / 0.2);
+  }
+
+  .landing-cta-glow {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+    transition: box-shadow 0.35s ease;
+  }
+
+  .landing-cta-glow:hover {
+    box-shadow: 0 0 24px 2px hsl(var(--primary) / 0.35), 0 0 0 1px hsl(var(--primary) / 0.3);
+  }
+
+  .perspective-\[1200px\] {
+    perspective: 1200px;
+  }
+
+  @keyframes landing-scan-drift {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 200px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-scan-lines {
+      animation: none;
+    }
+  }
   .pro-result-highlight {
     animation: pro-result-focus 1.6s ease-out;
   }
