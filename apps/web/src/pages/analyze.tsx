@@ -11,7 +11,7 @@ import {
   Check,
   Crown,
   Sparkles,
-  Lock,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { extractText } from "@/lib/pdf";
 import { generateCoverLetter, generateInterviewPrep, type InterviewQuestion } from "@/lib/api";
+import { getErrorMessage } from "@/lib/get-error-message";
 import { useScrollToReveal } from "@/hooks/use-scroll-to-reveal";
 import { AppShell } from "@/components/layout/app-shell";
 import { ScoreRing, scoreLabel } from "@/components/score-ring";
@@ -36,6 +37,8 @@ import { cn } from "@/lib/utils";
 import { RejectionAnalysisPanel } from "@/components/analysis/rejection-analysis";
 import { AttentionAnalysisPanel } from "@/components/analysis/attention-analysis";
 import type { AnalysisResult } from "@resume-ai/api-client-react";
+import { getFeatureQuota, isFeatureAvailable } from "@/lib/feature-usage";
+import { FeatureQuotaBadge, UpgradePrompt } from "@/components/usage/feature-quota";
 
 interface Analysis {
   id: string;
@@ -91,6 +94,12 @@ export default function Analyze() {
 
   const { data: usage } = useGetMyUsage();
   const isPro = usage?.isPro ?? false;
+  const analysisQuota = getFeatureQuota(usage, "analysis");
+  const coverLetterQuota = getFeatureQuota(usage, "cover_letter");
+  const interviewQuota = getFeatureQuota(usage, "interview_prep");
+  const canUseAnalysis = isFeatureAvailable(usage, "analysis");
+  const canUseCoverLetter = isFeatureAvailable(usage, "cover_letter");
+  const canUseInterviewPrep = isFeatureAvailable(usage, "interview_prep");
 
   const analyze = useCreateAnalysis({
     mutation: {
@@ -103,10 +112,10 @@ export default function Analyze() {
         queryClient.invalidateQueries({ queryKey: getGetMyUsageQueryKey() });
         toast({ title: "Analysis complete", description: `Your match score is ${(data as Analysis).score}/100` });
       },
-      onError: (err: { data?: { error?: string } }) => {
+      onError: (err: unknown) => {
         toast({
           title: "Analysis failed",
-          description: err?.data?.error ?? "Please try again in a moment.",
+          description: getErrorMessage(err, "Please try again in a moment."),
           variant: "destructive",
         });
       },
@@ -131,9 +140,20 @@ export default function Analyze() {
   };
 
   const canAnalyze =
-    resumeText.trim().length >= 50 && jobDescription.trim().length >= 50 && !analyze.isPending;
+    resumeText.trim().length >= 50 &&
+    jobDescription.trim().length >= 50 &&
+    !analyze.isPending &&
+    canUseAnalysis;
 
   const handleSubmit = () => {
+    if (!canUseAnalysis) {
+      toast({
+        title: "Free limit reached",
+        description: "You've used your free analysis for today. Upgrade to Pro for unlimited analyses.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!canAnalyze) return;
     analyze.mutate({ data: { resumeText: resumeText.trim(), jobDescription: jobDescription.trim() } });
   };
@@ -149,30 +169,38 @@ export default function Analyze() {
   };
 
   const runCoverLetter = async () => {
-    if (!isPro) return;
+    if (!canUseCoverLetter) return;
     setCoverLetterLoading(true);
     try {
       const letter = await generateCoverLetter(resumeText.trim(), jobDescription.trim());
       setCoverLetter(letter);
       coverLetterReveal.queueReveal();
+      queryClient.invalidateQueries({ queryKey: getGetMyUsageQueryKey() });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Generation failed";
-      toast({ title: "Cover letter failed", description: msg, variant: "destructive" });
+      toast({
+        title: "Cover letter failed",
+        description: getErrorMessage(err, "Generation failed"),
+        variant: "destructive",
+      });
     } finally {
       setCoverLetterLoading(false);
     }
   };
 
   const runInterviewPrep = async () => {
-    if (!isPro) return;
+    if (!canUseInterviewPrep) return;
     setInterviewLoading(true);
     try {
       const questions = await generateInterviewPrep(resumeText.trim(), jobDescription.trim());
       setInterviewQuestions(questions);
       interviewReveal.queueReveal();
+      queryClient.invalidateQueries({ queryKey: getGetMyUsageQueryKey() });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Generation failed";
-      toast({ title: "Interview prep failed", description: msg, variant: "destructive" });
+      toast({
+        title: "Interview prep failed",
+        description: getErrorMessage(err, "Generation failed"),
+        variant: "destructive",
+      });
     } finally {
       setInterviewLoading(false);
     }
@@ -188,16 +216,26 @@ export default function Analyze() {
     >
       {!isPro && usage && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-          <p className="text-sm">
-            <span className="font-semibold tabular-nums">{usage.used}</span>
-            <span className="text-muted-foreground"> / {usage.limit} analyses today</span>
-          </p>
-          <Link href="/billing">
-            <Button size="sm" variant="secondary" className="gap-1.5">
-              <Crown className="h-3.5 w-3.5" />
-              Upgrade to Pro
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium">Resume analysis</p>
+            <FeatureQuotaBadge quota={analysisQuota} isPro={isPro} />
+          </div>
+          {!canUseAnalysis ? (
+            <Link href="/billing">
+              <Button size="sm" variant="secondary" className="gap-1.5">
+                <Crown className="h-3.5 w-3.5" />
+                Upgrade to Pro
+              </Button>
+            </Link>
+          ) : null}
+        </div>
+      )}
+
+      {!isPro && !canUseAnalysis && (
+        <div className="mb-6">
+          <UpgradePrompt
+            description={`You've used ${analysisQuota.used} of ${analysisQuota.limit} free ${analysisQuota.label.toLowerCase()} today. Pro unlocks unlimited analyses, tailoring, cover letters, and interview prep.`}
+          />
         </div>
       )}
 
@@ -357,6 +395,29 @@ export default function Analyze() {
                   </div>
                 </div>
 
+                {result && (
+                  <div className="mt-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-transparent to-transparent p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 className="flex items-center gap-2 font-semibold">
+                          <Wand2 className="h-4 w-4 text-primary" />
+                          One-click resume tailoring
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Generate a role-optimized resume with side-by-side diff, keyword report, and
+                          recruiter impact — using only your real experience.
+                        </p>
+                      </div>
+                      <Link href={`/tailor?analysisId=${result.id}`}>
+                        <Button className="gap-2 glow-ring shrink-0 w-full sm:w-auto">
+                          <Wand2 className="h-4 w-4" />
+                          Tailor for this role
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
                 {analysisResult.attentionAnalysis && (
                   <div className="mt-6">
                     <AttentionAnalysisPanel data={analysisResult.attentionAnalysis} />
@@ -429,20 +490,26 @@ export default function Analyze() {
               </div>
 
               <div className="glass-panel rounded-2xl p-5">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Pro tools
-                </p>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    More tools
+                  </p>
+                  {!isPro && (
+                    <div className="flex flex-wrap gap-2">
+                      <FeatureQuotaBadge quota={coverLetterQuota} isPro={isPro} />
+                      <FeatureQuotaBadge quota={interviewQuota} isPro={isPro} />
+                    </div>
+                  )}
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button
                     variant="outline"
                     className="justify-start gap-2"
-                    disabled={!isPro || coverLetterLoading || interviewLoading}
-                    onClick={isPro ? runCoverLetter : undefined}
+                    disabled={!canUseCoverLetter || coverLetterLoading || interviewLoading}
+                    onClick={() => void runCoverLetter()}
                     aria-busy={coverLetterLoading}
                   >
-                    {!isPro ? (
-                      <Lock className="h-4 w-4 shrink-0" />
-                    ) : coverLetterLoading ? (
+                    {coverLetterLoading ? (
                       <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                     ) : (
                       <Mail className="h-4 w-4 shrink-0" />
@@ -452,13 +519,11 @@ export default function Analyze() {
                   <Button
                     variant="outline"
                     className="justify-start gap-2"
-                    disabled={!isPro || interviewLoading || coverLetterLoading}
-                    onClick={isPro ? runInterviewPrep : undefined}
+                    disabled={!canUseInterviewPrep || interviewLoading || coverLetterLoading}
+                    onClick={() => void runInterviewPrep()}
                     aria-busy={interviewLoading}
                   >
-                    {!isPro ? (
-                      <Lock className="h-4 w-4 shrink-0" />
-                    ) : interviewLoading ? (
+                    {interviewLoading ? (
                       <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                     ) : (
                       <MessageSquare className="h-4 w-4 shrink-0" />
@@ -466,13 +531,23 @@ export default function Analyze() {
                     {interviewLoading ? "Generating Interview Prep..." : "Interview prep"}
                   </Button>
                 </div>
-                {!isPro && (
-                  <p className="mt-3 text-center text-xs text-muted-foreground">
-                    <Link href="/billing" className="text-primary font-medium hover:underline">
-                      Upgrade to Pro
-                    </Link>{" "}
-                    to unlock cover letters and interview questions.
-                  </p>
+                {!isPro && !canUseCoverLetter && (
+                  <div className="mt-3">
+                    <UpgradePrompt
+                      compact
+                      title="Cover letter limit reached"
+                      description={`You've used your free cover letter for today. Upgrade to Pro for unlimited cover letters and interview prep.`}
+                    />
+                  </div>
+                )}
+                {!isPro && canUseCoverLetter && !canUseInterviewPrep && (
+                  <div className="mt-3">
+                    <UpgradePrompt
+                      compact
+                      title="Interview prep limit reached"
+                      description={`You've used your free interview prep for today. Upgrade to Pro for unlimited access to all tools.`}
+                    />
+                  </div>
                 )}
               </div>
 

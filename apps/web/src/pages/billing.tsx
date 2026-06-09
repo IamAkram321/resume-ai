@@ -42,16 +42,19 @@ export default function Billing() {
 
   const proFeatures = [
     "Unlimited resume analyses",
-    "ATS score + rewrite suggestions",
-    "AI cover letter generator",
-    "Personalized interview prep",
-    "30-day analysis history",
+    "Unlimited resume tailoring",
+    "Unlimited cover letter generation",
+    "Unlimited interview prep",
+    "Export tailored resumes",
+    "Extended analysis history",
   ];
 
   const freeFeatures = [
-    "3 analyses per day",
-    "ATS compatibility score",
-    "Strengths & gap analysis",
+    "1 free analysis per day",
+    "1 free tailoring per day",
+    "1 free cover letter per day",
+    "1 free interview prep per day",
+    "Full feature access — no locks",
   ];
 
   return (
@@ -98,7 +101,7 @@ export default function Billing() {
               <h2 className="font-semibold">Upgrade to Pro</h2>
             </div>
             <p className="mb-4 text-sm text-muted-foreground">
-              Unlock cover letters, interview prep, and unlimited analyses.
+              Go unlimited on every major feature — analyses, tailoring, cover letters, and interview prep.
             </p>
             <div className="mb-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">

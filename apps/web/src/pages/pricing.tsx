@@ -51,10 +51,11 @@ export default function Pricing() {
             </div>
             <ul className="space-y-3 mb-8 text-sm">
               {[
-                "3 resume analyses per day",
-                "ATS compatibility score",
-                "Basic strengths & weaknesses",
-                "Score out of 100",
+                "1 free use per feature per day",
+                "Resume analysis + ATS score",
+                "One-click resume tailoring",
+                "Cover letter generation",
+                "Interview prep questions",
               ].map(f => (
                 <li key={f} className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-chart-2 shrink-0" />
@@ -80,11 +81,11 @@ export default function Pricing() {
             <ul className="space-y-3 mb-8 text-sm">
               {[
                 "Unlimited analyses",
-                "Detailed AI feedback",
-                "Before/after rewrite suggestions",
-                "Missing ATS keywords",
-                "30-day analysis history",
-                "Priority processing",
+                "Unlimited resume tailoring",
+                "Unlimited cover letters",
+                "Unlimited interview prep",
+                "Export & version management",
+                "Extended history",
               ].map(f => (
                 <li key={f} className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-chart-2 shrink-0" />

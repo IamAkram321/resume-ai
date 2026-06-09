@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./schemas/analysis-result": "./src/schemas/analysis-result.ts"
+    "./schemas/analysis-result": "./src/schemas/analysis-result.ts",
+    "./schemas/tailoring-result": "./src/schemas/tailoring-result.ts"
   },
   "dependencies": {
     "zod": "catalog:"

@@ -1,9 +1,14 @@
 import express, { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
 import { eq, desc, and, gte, avg, count } from "drizzle-orm";
-import { db, usersTable, analysesTable } from "@resume-ai/db";
-import { checkRateLimit, incrementRateLimit } from "../lib/redis";
+import { db, analysesTable } from "@resume-ai/db";
+import {
+  checkFeatureQuota,
+  consumeFeatureQuota,
+  featureLimitError,
+} from "../lib/feature-usage";
 import { analyzeResume } from "../lib/groq";
+import { mapLlmErrorToResponse } from "../lib/llm-errors";
 import { getOrCreateUser } from "../lib/users";
 import { CreateAnalysisBody, GetAnalysisParams, DeleteAnalysisParams } from "@resume-ai/api-zod";
 import { randomUUID } from "crypto";
@@ -26,7 +31,7 @@ router.get("/analyses", async (req, res): Promise<void> => {
 
   const user = await getOrCreateUser(clerkUserId);
   const isPro = user.tier === "pro";
-  const limit = isPro ? 20 : 3;
+  const limit = isPro ? 50 : 10;
 
   const analyses = await db
     .select()
@@ -58,15 +63,11 @@ router.post("/analyses", async (req, res): Promise<void> => {
   const user = await getOrCreateUser(clerkUserId);
   const isPro = user.tier === "pro";
 
-  if (!isPro) {
-    const { allowed } = await checkRateLimit(clerkUserId);
-    if (!allowed) {
-      res.status(429).json({
-        error: "Daily limit reached. Upgrade to Pro.",
-        remaining: 0,
-      });
-      return;
-    }
+  const quota = await checkFeatureQuota(user.id, "analysis", isPro);
+  if (!quota.allowed) {
+    const { status, body } = featureLimitError("analysis", quota);
+    res.status(status).json(body);
+    return;
   }
 
   try {
@@ -84,14 +85,16 @@ router.post("/analyses", async (req, res): Promise<void> => {
       })
       .returning();
 
-    if (!isPro) {
-      await incrementRateLimit(clerkUserId);
-    }
+    await consumeFeatureQuota(user.id, "analysis", isPro);
 
     res.status(201).json(analysis);
   } catch (err: unknown) {
     req.log.error({ err }, "Analysis failed");
-    res.status(502).json({ error: "Analysis failed. Please try again in a moment." });
+    const { status, body } = mapLlmErrorToResponse(
+      err,
+      "Analysis failed. Please try again in a moment.",
+    );
+    res.status(status).json(body);
   }
 });
 

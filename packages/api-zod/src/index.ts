@@ -1,6 +1,17 @@
 export * from "./generated/api";
 export * from "./generated/types";
 export {
+  TailoringResultSchema,
+  TailoringMetadataSchema,
+  parseTailoringResultFromLlm,
+  parseTailoringMetadataFromLlm,
+} from "./schemas/tailoring-result";
+export {
+  CreateTailoredResumeBody,
+  TailoredResumeParams,
+  UpdateTailoredResumeLabelBody,
+} from "./schemas/tailored-resume-routes";
+export {
   SeveritySchema,
   RiskLevelSchema,
   ImpactLevelSchema,

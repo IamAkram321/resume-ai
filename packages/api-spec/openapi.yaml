@@ -246,7 +246,7 @@ components:
 
     UsageStatus:
       type: object
-      required: [used, limit, remaining, isPro]
+      required: [used, limit, remaining, isPro, features]
       properties:
         used:
           type: integer
@@ -256,6 +256,25 @@ components:
           type: integer
         isPro:
           type: boolean
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureQuota"
+
+    FeatureQuota:
+      type: object
+      required: [key, label, used, limit, remaining]
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        used:
+          type: integer
+        limit:
+          type: integer
+        remaining:
+          type: integer
 
     AnalysisSuggestion:
       type: object

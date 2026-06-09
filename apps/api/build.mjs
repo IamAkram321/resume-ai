@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { build as esbuild } from "esbuild";
+import { build, context } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
 import { rm } from "node:fs/promises";
 
@@ -10,11 +10,15 @@ globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 
+const watch = process.argv.includes("--watch");
+
 async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
-  await rm(distDir, { recursive: true, force: true });
+  if (!watch) {
+    await rm(distDir, { recursive: true, force: true });
+  }
 
-  await esbuild({
+  const buildOptions = {
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
     platform: "node",
     bundle: true,
@@ -117,7 +121,16 @@ globalThis.__filename = __bannerUrl.fileURLToPath(import.meta.url);
 globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
-  });
+  };
+
+  if (watch) {
+    const ctx = await context(buildOptions);
+    await ctx.watch();
+    console.log("[api] Watching for changes…");
+    return;
+  }
+
+  await build(buildOptions);
 }
 
 buildAll().catch((err) => {

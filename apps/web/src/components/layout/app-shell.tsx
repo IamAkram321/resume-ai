@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   X,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/analyze", label: "Analyze", icon: FileText },
+  { href: "/tailor", label: "Tailor", icon: Wand2 },
   { href: "/billing", label: "Billing", icon: Crown },
 ] as const;
 

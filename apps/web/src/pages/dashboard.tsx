@@ -6,7 +6,6 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ScoreRing } from "@/components/score-ring";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useListAnalyses, useDeleteAnalysis, useGetAnalysisStats, useGetMyUsage, getListAnalysesQueryKey, getGetAnalysisStatsQueryKey, getGetMyUsageQueryKey } from "@resume-ai/api-client-react";
@@ -16,6 +15,7 @@ import { format } from "date-fns";
 import { RejectionAnalysisPanel } from "@/components/analysis/rejection-analysis";
 import { AttentionAnalysisPanel } from "@/components/analysis/attention-analysis";
 import type { Analysis } from "@resume-ai/api-client-react";
+import { FreeUsageOverview, UpgradePrompt } from "@/components/usage/feature-quota";
 
 function AnalysisModal({ analysis, onClose }: { analysis: Analysis | null; onClose: () => void }) {
   if (!analysis) return null;
@@ -140,37 +140,19 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Usage bar (free users) */}
-            {!isPro && usage && (
-              <div className="glass-panel rounded-xl p-5 mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium">Daily Usage</span>
-                  <span className="text-sm text-muted-foreground" data-testid="usage-counter">{usage.used} / {usage.limit} analyses used today</span>
-                </div>
-                <Progress value={(usage.used / usage.limit) * 100} className="h-2" />
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{usage.remaining} remaining</span>
-                  <Link href="/billing">
-                    <Button size="sm" variant="ghost" className="text-primary text-xs gap-1">
-                      <Crown className="w-3 h-3" />Upgrade for unlimited
-                    </Button>
-                  </Link>
-                </div>
+            {!isPro && usage?.features && (
+              <div className="mb-6">
+                <FreeUsageOverview features={usage.features} isPro={isPro} />
               </div>
             )}
 
-            {/* Upgrade banner (free) */}
             {!isPro && (
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 mb-6 flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-sm">Unlock unlimited analyses</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">Go Pro for $9/month — unlimited analyses, detailed feedback, 30-day history.</div>
-                </div>
-                <Link href="/billing">
-                  <Button size="sm" className="gap-1 shrink-0 ml-4" data-testid="upgrade-banner-cta">
-                    <Crown className="w-3 h-3" />Upgrade
-                  </Button>
-                </Link>
+              <div className="mb-6">
+                <UpgradePrompt
+                  compact
+                  title="Need more today?"
+                  description="Free includes 1 use per feature per day. Pro unlocks unlimited analyses, tailoring, cover letters, and interview prep."
+                />
               </div>
             )}
 

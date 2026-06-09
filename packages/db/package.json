@@ -9,7 +9,9 @@
   },
   "scripts": {
     "push": "drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
+    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
+    "migrate:tailoring": "node ./scripts/apply-tailoring-table.mjs",
+    "migrate:feature-usage": "node ./scripts/apply-feature-usage-table.mjs"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",

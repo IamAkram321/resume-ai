@@ -1,9 +1,15 @@
 import Groq from "groq-sdk";
 import { logger } from "./logger";
+import { isGroqRateLimitError } from "./llm-errors";
 import { parseLlmJson } from "./parseLlmJson";
 import { parseAnalysisResultFromLlm, type AnalysisResult } from "@resume-ai/api-zod/schemas/analysis-result";
+import {
+  parseTailoringMetadataFromLlm,
+  type TailoringResult,
+} from "@resume-ai/api-zod/schemas/tailoring-result";
+import type { StoredAnalysisResult } from "@resume-ai/api-zod/schemas/analysis-result";
 
-export type { AnalysisResult };
+export type { AnalysisResult, TailoringResult };
 
 export interface InterviewQuestion {
   category: string;
@@ -12,6 +18,12 @@ export interface InterviewQuestion {
 }
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+
+function shouldRetryLlm(err: unknown): boolean {
+  return !isGroqRateLimitError(err);
+}
 
 const SYSTEM_PROMPT = `You are an expert technical recruiter and hiring manager with 15 years of experience at top tech companies. Analyze the provided resume against the job description.
 
@@ -99,6 +111,91 @@ ATTENTION ANALYSIS RULES (critical):
 
 Be specific, actionable, and constructive. Return ONLY the JSON. No markdown. No explanation outside the JSON.`;
 
+const TAILOR_RESUME_TEXT_PROMPT = `You are an expert resume optimization specialist. Rewrite the candidate's resume for the specific job description.
+
+Output ONLY the full tailored resume as plain text with clear section headers (e.g. EXPERIENCE, PROJECTS, SKILLS).
+Do NOT use JSON, markdown code fences, or commentary before/after the resume.
+
+CRITICAL HONESTY RULES:
+- NEVER invent experience, companies, technologies, projects, certifications, or metrics.
+- ONLY rewrite, reorder, emphasize, and strengthen content from the original resume.
+- Do not add numbers unless they already exist in the original.
+
+Use prior analysis context when provided to prioritize role-relevant content and keywords.`;
+
+const TAILOR_METADATA_PROMPT = `You are an expert resume optimization specialist. Compare the ORIGINAL and TAILORED resumes for a specific job.
+
+Return ONLY a valid JSON object with this exact structure (do NOT include tailoredResume — it is provided separately):
+{
+  "targetRole": "<inferred role title from job description>",
+  "metrics": {
+    "atsBefore": <number 0-100>,
+    "atsAfter": <number 0-100>,
+    "recruiterAlignmentBefore": "Low" | "Medium" | "High",
+    "recruiterAlignmentAfter": "Low" | "Medium" | "High",
+    "roleMatchBefore": "Low" | "Medium" | "High",
+    "roleMatchAfter": "Low" | "Medium" | "High"
+  },
+  "topImprovements": ["<improvement 1>", "<improvement 2>", ...],
+  "changes": [
+    {
+      "type": "keyword" | "bullet_improvement" | "section_reorder" | "visibility" | "wording",
+      "section": "<section name>",
+      "original": "<exact or close quote from original resume>",
+      "optimized": "<improved version>",
+      "reason": "<why this change helps for this role>"
+    }
+  ],
+  "keywordOptimization": {
+    "present": ["<keywords already in original>"],
+    "added": ["<keywords added in the tailored version>"],
+    "stillMissing": ["<relevant job keywords not yet in tailored resume>"]
+  },
+  "recruiterImpact": {
+    "beforeSummary": "<1-2 sentences on recruiter impression before>",
+    "afterSummary": "<1-2 sentences on recruiter impression after>",
+    "recruiterVisibilityImproved": true | false,
+    "technicalAlignmentImproved": true | false,
+    "atsCompatibilityImproved": true | false,
+    "applicationCompetitivenessImproved": true | false
+  }
+}
+
+CRITICAL HONESTY RULES — NEVER violate:
+- NEVER invent experience, internships, companies, technologies, projects, certifications, degrees, or metrics.
+- ONLY rewrite, reorder, emphasize, and strengthen content that exists in the original resume.
+- If a metric is not in the original, do not add numbers unless rephrasing existing facts.
+- "added" keywords must actually appear in tailoredResume text.
+- changes must map to real before/after pairs from the resume.
+- atsBefore should reflect the provided analysis score when given; atsAfter must be realistic (typically +3 to +15, never above 98).
+- Provide 5-20 meaningful changes covering bullets, keywords, and section order.
+- Compare the ORIGINAL and TAILORED resume texts supplied in the user message.
+
+Use the prior ATS analysis when provided. Return ONLY JSON. No markdown.`;
+
+function buildAnalysisContext(analysis: StoredAnalysisResult | null | undefined): string {
+  if (!analysis) return "";
+  const parts: string[] = [
+    `ATS score: ${analysis.score}`,
+    `Summary: ${analysis.summary}`,
+    `Missing ATS keywords: ${analysis.atsKeywords.join(", ") || "none listed"}`,
+    `Top weaknesses: ${analysis.weaknesses.slice(0, 5).join("; ")}`,
+  ];
+  if (analysis.rejectionAnalysis) {
+    parts.push(
+      `Rejection risk: ${analysis.rejectionAnalysis.overallRisk}`,
+      `Key gaps: ${analysis.rejectionAnalysis.reasons.slice(0, 3).map((r) => r.title).join("; ")}`,
+    );
+  }
+  if (analysis.attentionAnalysis) {
+    parts.push(
+      `Attention — surface first: ${analysis.attentionAnalysis.firstFocusAreas.map((a) => a.section).join(", ")}`,
+      `Buried strengths: ${analysis.attentionAnalysis.hiddenStrengths.map((h) => h.insight).join("; ") || "n/a"}`,
+    );
+  }
+  return `\n\nPRIOR ANALYSIS CONTEXT:\n${parts.join("\n")}`;
+}
+
 export async function analyzeResume(
   resumeText: string,
   jobDescription: string,
@@ -107,7 +204,7 @@ export async function analyzeResume(
 
   async function attempt(): Promise<AnalysisResult> {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
@@ -122,7 +219,93 @@ export async function analyzeResume(
   try {
     return await attempt();
   } catch (err) {
-    logger.warn({ err }, "First Groq parse attempt failed, retrying");
+    if (!shouldRetryLlm(err)) throw err;
+    logger.warn({ err }, "Analysis failed, retrying once");
+    return await attempt();
+  }
+}
+
+async function generateTailoredResumeText(
+  resumeText: string,
+  jobDescription: string,
+  analysis?: StoredAnalysisResult | null,
+): Promise<string> {
+  const context = buildAnalysisContext(analysis);
+  const completion = await groq.chat.completions.create({
+    model: GROQ_MODEL,
+    messages: [
+      { role: "system", content: TAILOR_RESUME_TEXT_PROMPT },
+      {
+        role: "user",
+        content: `ORIGINAL RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}${context}`,
+      },
+    ],
+    temperature: 0.35,
+    max_tokens: 4096,
+  });
+
+  const text = (completion.choices[0]?.message?.content ?? "").trim();
+  if (text.length < 100) {
+    throw new Error("Tailored resume text was empty or too short");
+  }
+  return text;
+}
+
+async function generateTailoringMetadata(
+  resumeText: string,
+  tailoredResume: string,
+  jobDescription: string,
+  analysis?: StoredAnalysisResult | null,
+): Promise<Omit<TailoringResult, "tailoredResume">> {
+  const context = buildAnalysisContext(analysis);
+  const userMessage = `ORIGINAL RESUME:\n${resumeText}\n\nTAILORED RESUME:\n${tailoredResume}\n\nJOB DESCRIPTION:\n${jobDescription}${context}`;
+
+  const completion = await groq.chat.completions.create({
+    model: GROQ_MODEL,
+    messages: [
+      { role: "system", content: TAILOR_METADATA_PROMPT },
+      { role: "user", content: userMessage },
+    ],
+    temperature: 0.3,
+    max_tokens: 4096,
+  });
+
+  const content = completion.choices[0]?.message?.content ?? "";
+  const parsed = parseTailoringMetadataFromLlm(parseLlmJson(content));
+
+  const metrics =
+    analysis?.score != null && parsed.metrics.atsBefore !== analysis.score
+      ? { ...parsed.metrics, atsBefore: analysis.score }
+      : parsed.metrics;
+
+  return { ...parsed, metrics };
+}
+
+export async function generateTailoredResume(
+  resumeText: string,
+  jobDescription: string,
+  analysis?: StoredAnalysisResult | null,
+): Promise<TailoringResult> {
+  async function attempt(): Promise<TailoringResult> {
+    const tailoredResume = await generateTailoredResumeText(
+      resumeText,
+      jobDescription,
+      analysis,
+    );
+    const metadata = await generateTailoringMetadata(
+      resumeText,
+      tailoredResume,
+      jobDescription,
+      analysis,
+    );
+    return { ...metadata, tailoredResume };
+  }
+
+  try {
+    return await attempt();
+  } catch (err) {
+    if (!shouldRetryLlm(err)) throw err;
+    logger.warn({ err }, "Tailoring failed, retrying once");
     return await attempt();
   }
 }
@@ -132,7 +315,7 @@ export async function generateCoverLetter(
   jobDescription: string,
 ): Promise<string> {
   const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: GROQ_MODEL,
     messages: [
       {
         role: "system",
@@ -164,7 +347,7 @@ export async function generateInterviewQuestions(
   jobDescription: string,
 ): Promise<InterviewQuestion[]> {
   const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: GROQ_MODEL,
     messages: [
       {
         role: "system",

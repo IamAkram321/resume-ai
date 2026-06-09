@@ -31,11 +31,20 @@ export interface User {
   createdAt: string;
 }
 
+export interface FeatureQuota {
+  key: string;
+  label: string;
+  used: number;
+  limit: number;
+  remaining: number;
+}
+
 export interface UsageStatus {
   used: number;
   limit: number;
   remaining: number;
   isPro: boolean;
+  features: FeatureQuota[];
 }
 
 export interface AnalysisSuggestion {

@@ -11,9 +11,11 @@ import { queryClient } from "@/lib/queryClient";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Analyze from "@/pages/analyze";
+import Tailor from "@/pages/tailor";
 import Billing from "@/pages/billing";
 import Pricing from "@/pages/pricing";
 import NotFound from "@/pages/not-found";
+import { AuthFetchSetup } from "@/components/auth-fetch-setup";
 
 // Use the publishable key directly from env in development.
 const effectiveClerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
@@ -159,6 +161,7 @@ function AppRouter() {
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
       <QueryClientProvider client={queryClient}>
+        <AuthFetchSetup>
         <TooltipProvider>
           <ClerkCacheInvalidator />
           <Switch>
@@ -172,6 +175,12 @@ function AppRouter() {
             <Route path="/analyze">
               <ProtectedRoute><Analyze /></ProtectedRoute>
             </Route>
+            <Route path="/tailor">
+              <ProtectedRoute><Tailor /></ProtectedRoute>
+            </Route>
+            <Route path="/tailor/:id">
+              <ProtectedRoute><Tailor /></ProtectedRoute>
+            </Route>
             <Route path="/billing">
               <ProtectedRoute><Billing /></ProtectedRoute>
             </Route>
@@ -179,6 +188,7 @@ function AppRouter() {
           </Switch>
           <Toaster />
         </TooltipProvider>
+        </AuthFetchSetup>
       </QueryClientProvider>
     </ClerkProvider>
   );

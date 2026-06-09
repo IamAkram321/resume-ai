@@ -1,6 +1,12 @@
 import { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
 import { generateCoverLetter, generateInterviewQuestions } from "../lib/groq";
+import { mapLlmErrorToResponse } from "../lib/llm-errors";
+import {
+  checkFeatureQuota,
+  consumeFeatureQuota,
+  featureLimitError,
+} from "../lib/feature-usage";
 import { getOrCreateUser } from "../lib/users";
 
 const router: IRouter = Router();
@@ -27,10 +33,7 @@ router.post("/generate/cover-letter", async (req, res): Promise<void> => {
   }
 
   const user = await getOrCreateUser(auth.userId);
-  if (user.tier !== "pro") {
-    res.status(403).json({ error: "Cover letter generation requires a Pro subscription." });
-    return;
-  }
+  const isPro = user.tier === "pro";
 
   const input = validateInput(req.body);
   if (!input) {
@@ -40,12 +43,24 @@ router.post("/generate/cover-letter", async (req, res): Promise<void> => {
     return;
   }
 
+  const quota = await checkFeatureQuota(user.id, "cover_letter", isPro);
+  if (!quota.allowed) {
+    const { status, body } = featureLimitError("cover_letter", quota);
+    res.status(status).json(body);
+    return;
+  }
+
   try {
     const coverLetter = await generateCoverLetter(input.resumeText, input.jobDescription);
+    await consumeFeatureQuota(user.id, "cover_letter", isPro);
     res.json({ coverLetter });
   } catch (err: unknown) {
     req.log.error({ err }, "Cover letter generation failed");
-    res.status(502).json({ error: "Failed to generate cover letter. Please try again." });
+    const { status, body } = mapLlmErrorToResponse(
+      err,
+      "Failed to generate cover letter. Please try again.",
+    );
+    res.status(status).json(body);
   }
 });
 
@@ -57,10 +72,7 @@ router.post("/generate/interview-prep", async (req, res): Promise<void> => {
   }
 
   const user = await getOrCreateUser(auth.userId);
-  if (user.tier !== "pro") {
-    res.status(403).json({ error: "Interview prep requires a Pro subscription." });
-    return;
-  }
+  const isPro = user.tier === "pro";
 
   const input = validateInput(req.body);
   if (!input) {
@@ -70,15 +82,27 @@ router.post("/generate/interview-prep", async (req, res): Promise<void> => {
     return;
   }
 
+  const quota = await checkFeatureQuota(user.id, "interview_prep", isPro);
+  if (!quota.allowed) {
+    const { status, body } = featureLimitError("interview_prep", quota);
+    res.status(status).json(body);
+    return;
+  }
+
   try {
     const questions = await generateInterviewQuestions(
       input.resumeText,
       input.jobDescription,
     );
+    await consumeFeatureQuota(user.id, "interview_prep", isPro);
     res.json({ questions });
   } catch (err: unknown) {
     req.log.error({ err }, "Interview prep generation failed");
-    res.status(502).json({ error: "Failed to generate interview questions. Please try again." });
+    const { status, body } = mapLlmErrorToResponse(
+      err,
+      "Failed to generate interview questions. Please try again.",
+    );
+    res.status(status).json(body);
   }
 });
 

@@ -3,13 +3,18 @@ import { Link } from "wouter";
 import {
   ArrowRight, Brain, Target, Zap, CheckCircle, FileText,
   MessageSquare, Star, ChevronDown, ChevronUp, Mail,
-  BarChart3, Shield, Clock, ScanSearch, Eye,
+  BarChart3, Shield, Clock, ScanSearch, Eye, Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const FEATURES = [
+  {
+    icon: Wand2,
+    title: "One-Click Resume Tailoring",
+    desc: "Tailor your full resume for any role in one click — side-by-side diff, keyword report, and recruiter impact. Never invents experience.",
+  },
   {
     icon: Brain,
     title: "AI Resume Analysis",
@@ -55,7 +60,8 @@ const FEATURES = [
 const STEPS = [
   { step: "01", title: "Upload Your Resume", desc: "Drag and drop your PDF or paste your resume text. We extract all content automatically." },
   { step: "02", title: "Paste the Job Description", desc: "Copy the job listing you're applying for. The more detail you provide, the better the analysis." },
-  { step: "03", title: "Get AI Feedback", desc: "Receive your score, strengths, weaknesses, rewrite suggestions, cover letter, and interview prep — in seconds." },
+  { step: "03", title: "Get AI Feedback", desc: "Receive your score, strengths, weaknesses, and recruiter intelligence — in seconds." },
+  { step: "04", title: "Tailor & Apply", desc: "One-click tailor your resume, compare original vs optimized, and export when ready." },
 ];
 
 const TESTIMONIALS = [
@@ -97,7 +103,7 @@ const FAQS = [
   },
   {
     q: "What's the difference between Free and Pro?",
-    a: "Free gives you 3 analyses per day with ATS score and basic feedback. Pro gives you unlimited analyses, rewrite suggestions, cover letter generation, interview prep questions, and 30-day history.",
+    a: "Free gives you 1 use per feature per day — analysis, tailoring, cover letters, and interview prep. Nothing is locked. Pro removes all daily limits for unlimited access.",
   },
   {
     q: "Can I cancel my Pro subscription?",
@@ -182,7 +188,7 @@ export default function Landing() {
             <Button size="lg" variant="outline" className="text-base px-8">See Pricing</Button>
           </Link>
         </div>
-        <p className="text-sm text-muted-foreground">3 free analyses per day. No credit card required.</p>
+        <p className="text-sm text-muted-foreground">Try every feature free — 1 use per day. No credit card required.</p>
       </section>
 
       {/* Stats bar */}
@@ -326,7 +332,7 @@ export default function Landing() {
             <div className="text-4xl font-extrabold mb-1">$0<span className="text-lg font-normal text-muted-foreground">/mo</span></div>
             <p className="text-xs text-muted-foreground mb-6">Always free, no card needed</p>
             <ul className="space-y-3 mb-8">
-              {["3 resume analyses per day", "ATS compatibility score", "Basic strengths & weaknesses", "Score out of 100"].map(f => (
+              {["1 free use per feature per day", "Resume analysis + ATS score", "One-click tailoring", "Cover letters & interview prep"].map(f => (
                 <li key={f} className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-chart-2 shrink-0" />{f}
                 </li>
@@ -344,12 +350,11 @@ export default function Landing() {
             <ul className="space-y-3 mb-8">
               {[
                 "Unlimited analyses",
-                "Detailed AI feedback",
-                "Before/after rewrite suggestions",
-                "Cover letter generator",
-                "Interview prep questions",
-                "30-day analysis history",
-                "Priority processing",
+                "Unlimited tailoring",
+                "Unlimited cover letters",
+                "Unlimited interview prep",
+                "Export & version management",
+                "Extended history",
               ].map(f => (
                 <li key={f} className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-chart-2 shrink-0" />{f}
