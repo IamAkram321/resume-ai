@@ -5,6 +5,7 @@ import analysesRouter from "./analyses";
 import billingRouter from "./billing";
 import generateRouter from "./generate";
 import tailoredResumesRouter from "./tailored-resumes";
+import interviewsRouter from "./interviews";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(analysesRouter);
 router.use(billingRouter);
 router.use(generateRouter);
 router.use(tailoredResumesRouter);
+router.use(interviewsRouter);
 
 export default router;

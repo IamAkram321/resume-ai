@@ -14,6 +14,9 @@ import Analyze from "@/pages/analyze";
 import Tailor from "@/pages/tailor";
 import Billing from "@/pages/billing";
 import Pricing from "@/pages/pricing";
+import InterviewNew from "@/pages/interview-new";
+import InterviewSession from "@/pages/interview-session";
+import InterviewHistory from "@/pages/interview-history";
 import NotFound from "@/pages/not-found";
 import { AuthFetchSetup } from "@/components/auth-fetch-setup";
 
@@ -183,6 +186,15 @@ function AppRouter() {
             </Route>
             <Route path="/billing">
               <ProtectedRoute><Billing /></ProtectedRoute>
+            </Route>
+            <Route path="/interview/new">
+              <ProtectedRoute><InterviewNew /></ProtectedRoute>
+            </Route>
+            <Route path="/interview/history">
+              <ProtectedRoute><InterviewHistory /></ProtectedRoute>
+            </Route>
+            <Route path="/interview/:id">
+              <ProtectedRoute><InterviewSession /></ProtectedRoute>
             </Route>
             <Route component={NotFound} />
           </Switch>

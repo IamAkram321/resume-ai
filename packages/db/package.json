@@ -12,7 +12,8 @@
     "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
     "migrate:tailoring": "node ./scripts/apply-tailoring-table.mjs",
     "migrate:feature-usage": "node ./scripts/apply-feature-usage-table.mjs",
-    "migrate:resume-layout": "node ./scripts/apply-resume-layout-columns.mjs"
+    "migrate:resume-layout": "node ./scripts/apply-resume-layout-columns.mjs",
+    "migrate:mock-interviews": "node ./scripts/apply-mock-interviews.mjs"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",

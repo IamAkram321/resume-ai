@@ -3,13 +3,13 @@ import type { ReactNode } from "react";
 import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
-interface MagneticButtonProps extends React.HTMLAttributes<HTMLDivElement> {
+interface MagneticButtonProps {
   children: React.ReactNode;
   className?: string;
   strength?: number;
 }
 
-export function MagneticButton({ children, className, strength = 0.28, ...props }: MagneticButtonProps) {
+export function MagneticButton({ children, className, strength = 0.28 }: MagneticButtonProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const x = useMotionValue(0);
@@ -27,7 +27,6 @@ export function MagneticButton({ children, className, strength = 0.28, ...props 
       className={cn("inline-flex", className)}
       style={{ x: springX, y: springY }}
       data-magnetic
-      {...props}
       onMouseMove={(e) => {
         const el = ref.current;
         if (!el) return;

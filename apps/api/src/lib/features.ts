@@ -4,6 +4,7 @@ export const FEATURE_KEYS = [
   "tailor",
   "cover_letter",
   "interview_prep",
+  "mock_interview",
 ] as const;
 
 export type FeatureKey = (typeof FEATURE_KEYS)[number];
@@ -35,6 +36,11 @@ export const FEATURE_DEFINITIONS: Record<FeatureKey, FeatureDefinition> = {
     key: "interview_prep",
     label: "Interview prep",
     freeDailyLimit: 1,
+  },
+  mock_interview: {
+    key: "mock_interview",
+    label: "Mock interview",
+    freeDailyLimit: 3,
   },
 };
 

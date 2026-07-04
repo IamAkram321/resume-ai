@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Wand2,
+  Mic,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/analyze", label: "Analyze", icon: FileText },
   { href: "/tailor", label: "Tailor", icon: Wand2 },
+  { href: "/interview/new", label: "Mock Interview", icon: Mic },
   { href: "/billing", label: "Billing", icon: Crown },
 ] as const;
 

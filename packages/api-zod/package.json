@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./schemas/analysis-result": "./src/schemas/analysis-result.ts",
     "./schemas/tailoring-result": "./src/schemas/tailoring-result.ts",
-    "./schemas/resume-layout": "./src/schemas/resume-layout.ts"
+    "./schemas/resume-layout": "./src/schemas/resume-layout.ts",
+    "./schemas/interview": "./src/schemas/interview.ts"
   },
   "dependencies": {
     "zod": "catalog:"

@@ -1,7 +1,7 @@
 /** Shared helpers for freemium feature quotas (mirrors API UsageStatus). */
 import type { FeatureQuota, UsageStatus } from "@resume-ai/api-client-react";
 
-export type FeatureKey = "analysis" | "tailor" | "cover_letter" | "interview_prep";
+export type FeatureKey = "analysis" | "tailor" | "cover_letter" | "interview_prep" | "mock_interview";
 
 export function getFeatureQuota(
   usage: UsageStatus | undefined,
