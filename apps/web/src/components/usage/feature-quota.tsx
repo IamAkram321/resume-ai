@@ -42,7 +42,7 @@ export function UpgradePrompt({
   return (
     <div
       className={cn(
-        "rounded-xl border border-primary/25 bg-gradient-to-br from-primary/10 via-transparent to-transparent",
+        "rounded-xl border border-border bg-card shadow-sm",
         compact ? "p-4" : "p-5",
       )}
     >

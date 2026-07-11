@@ -356,7 +356,7 @@ export default function Analyze() {
             />
           </div>
 
-          <Button className="w-full gap-2 glow-ring" size="lg" disabled={!canAnalyze} onClick={handleSubmit}>
+          <Button className="w-full gap-2" size="lg" disabled={!canAnalyze} onClick={handleSubmit}>
             {analyze.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -391,7 +391,7 @@ export default function Analyze() {
             </div>
           ) : (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="glass-panel glow-ring rounded-2xl p-6">
+              <div className="glass-panel rounded-2xl p-6 shadow-sm">
                 <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
                   <ScoreRing score={analysisResult.score} size="lg" showLabel />
                   <div className="flex-1 text-center sm:text-left">
@@ -408,7 +408,7 @@ export default function Analyze() {
                 </div>
 
                 {result && (
-                  <div className="mt-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-transparent to-transparent p-5">
+                  <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <h3 className="flex items-center gap-2 font-semibold">
@@ -421,7 +421,7 @@ export default function Analyze() {
                         </p>
                       </div>
                       <Link href={`/tailor?analysisId=${result.id}`}>
-                        <Button className="gap-2 glow-ring shrink-0 w-full sm:w-auto">
+                        <Button className="gap-2 shrink-0 w-full sm:w-auto">
                           <Wand2 className="h-4 w-4" />
                           Tailor for this role
                         </Button>

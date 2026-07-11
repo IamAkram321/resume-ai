@@ -122,7 +122,7 @@ export function RejectionAnalysisPanel({ data }: { data: RejectionAnalysis }) {
 
   return (
     <section className="glass-panel overflow-hidden rounded-2xl">
-      <div className="border-b border-border/60 bg-gradient-to-r from-primary/5 via-transparent to-transparent px-5 py-5 sm:px-6">
+      <div className="border-b border-border/60 bg-muted/20 px-5 py-5 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">

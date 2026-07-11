@@ -19,7 +19,7 @@ export function LandingBackground() {
 
       {/* Slow spotlight */}
       <motion.div
-        className="absolute h-[600px] w-[600px] rounded-full bg-primary/8 blur-[120px]"
+        className="absolute h-[600px] w-[600px] rounded-full bg-primary/3 blur-[120px]"
         animate={
           reduceMotion
             ? undefined
@@ -29,7 +29,7 @@ export function LandingBackground() {
         style={{ left: "30%", top: "10%" }}
       />
       <motion.div
-        className="absolute h-[500px] w-[500px] rounded-full bg-chart-5/10 blur-[100px]"
+        className="absolute h-[500px] w-[500px] rounded-full bg-chart-5/3 blur-[100px]"
         animate={
           reduceMotion
             ? undefined
@@ -40,7 +40,7 @@ export function LandingBackground() {
       />
 
       {/* Scan lines */}
-      <div className="absolute inset-0 landing-scan-lines opacity-[0.04]" />
+      <div className="absolute inset-0 landing-scan-lines opacity-0" />
 
       {/* Document pattern */}
       <div className="absolute inset-0 landing-doc-pattern opacity-[0.03]" />
@@ -50,7 +50,7 @@ export function LandingBackground() {
         FLOATING_KEYWORDS.map((word, i) => (
           <motion.span
             key={word}
-            className="absolute rounded-full border border-primary/10 bg-card/30 px-2.5 py-1 text-[10px] font-medium text-muted-foreground/60 backdrop-blur-sm"
+            className="absolute rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground/60 shadow-sm"
             style={{
               left: `${8 + (i * 7.3) % 82}%`,
               top: `${12 + (i * 11.7) % 75}%`,

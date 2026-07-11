@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { AiCursor } from "@/components/landing/ai-cursor";
 import { LandingBackground } from "@/components/landing/landing-background";
 import { ResumeHeroVisual } from "@/components/landing/resume-hero-visual";
 import { FeatureCard } from "@/components/landing/feature-card";
@@ -152,13 +151,12 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
       <LandingBackground />
-      <AiCursor />
 
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_20px_-4px_hsl(var(--primary)/0.5)]">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center border border-border shadow-sm">
               <Brain className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-bold text-lg tracking-tight">ResumeAI</span>
@@ -329,7 +327,7 @@ export default function Landing() {
                   <div>
                     <div className="font-semibold text-sm">{t.name}</div>
                     <div className="text-xs text-muted-foreground">{t.role}</div>
-                    <Badge variant="secondary" className="mt-2 text-xs text-chart-2">{t.company}</Badge>
+                    <Badge variant="secondary" className="mt-2 text-xs">{t.company}</Badge>
                   </div>
                 </div>
               </FadeInView>
@@ -411,8 +409,7 @@ export default function Landing() {
       {/* CTA banner */}
       <section className="max-w-6xl mx-auto px-6 py-24">
         <FadeInView>
-          <div className="landing-glass-glow rounded-2xl p-12 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-chart-5/5 pointer-events-none" />
+          <div className="landing-glass rounded-2xl p-12 text-center relative overflow-hidden">
             <div className="relative">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to get more interviews?</h2>
               <p className="text-muted-foreground mb-8 max-w-lg mx-auto">

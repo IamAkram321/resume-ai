@@ -108,7 +108,7 @@ export function AppShell({
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar">
       <div className="flex items-center gap-2.5 border-b border-sidebar-border px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-[0_0_24px_-4px_hsl(var(--primary)/0.5)]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary border border-border shadow-sm">
           <Brain className="h-5 w-5 text-primary-foreground" />
         </div>
         <span className="text-lg font-semibold tracking-tight">ResumeAI</span>

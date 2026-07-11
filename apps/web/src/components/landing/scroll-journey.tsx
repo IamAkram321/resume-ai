@@ -139,9 +139,6 @@ function JourneyStep({
         >
           <Icon className={`w-5 h-5 ${step.color}`} />
         </motion.div>
-        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-muted-foreground tabular-nums">
-          {String(step.step).padStart(2, "0")}
-        </span>
       </div>
 
       {/* Card */}

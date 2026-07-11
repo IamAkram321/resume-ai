@@ -95,12 +95,12 @@ export default function Billing() {
         </div>
 
         {!isPro && (
-          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-transparent to-transparent p-6">
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-2 flex items-center gap-2">
               <Crown className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold">Upgrade to Pro</h2>
+              <h2 className="font-semibold text-foreground">Upgrade to Pro</h2>
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">
+            <p className="mb-4 text-sm text-muted-foreground leading-relaxed">
               Go unlimited on every major feature — analyses, tailoring, cover letters, and interview prep.
             </p>
             <div className="mb-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -111,11 +111,11 @@ export default function Billing() {
                 <MessageSquare className="h-3.5 w-3.5" /> Interview prep
               </span>
             </div>
-            <div className="mb-4 text-3xl font-extrabold">
+            <div className="mb-4 text-3xl font-extrabold tracking-tight">
               $9<span className="text-lg font-normal text-muted-foreground">/month</span>
             </div>
             <Button
-              className="gap-2 glow-ring"
+              className="gap-2"
               disabled={checkout.isPending}
               onClick={() => checkout.mutate()}
               data-testid="btn-upgrade"

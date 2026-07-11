@@ -238,7 +238,7 @@ export default function Tailor() {
             </div>
             <Button
               size="lg"
-              className="gap-2 glow-ring shrink-0"
+              className="gap-2 shrink-0"
               disabled={generating || !analysisIdFromQuery || !canUseTailor}
               onClick={() => void runTailoring()}
             >
